@@ -1,0 +1,6 @@
+(do
+((i 0 (+ i 1)))
+((= i (length (solver-residuals))))
+(format port "~a ~2t" (cdr (list-ref (solver-residuals) i)))
+)
+(newline port)

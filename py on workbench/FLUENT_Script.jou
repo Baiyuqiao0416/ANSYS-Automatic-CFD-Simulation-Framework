@@ -54,8 +54,18 @@
 (cx-gui-do cx-set-list-tree-selections "NavigationPane*List_Tree1" (list "Solution|Run Calculation"))
 (cx-gui-do cx-activate-item "NavigationPane*List_Tree1")
 (cx-gui-do cx-set-list-tree-selections "NavigationPane*List_Tree1" (list "Solution|Run Calculation"))
-(cx-gui-do cx-set-integer-entry "Run Calculation*Table1*IntegerEntry10(Number of Iterations)" 10) 
+(cx-gui-do cx-set-integer-entry "Run Calculation*Table1*IntegerEntry10(Number of Iterations)" 50) 
 (cx-gui-do cx-activate-item "Run Calculation*Table1*IntegerEntry10(Number of Iterations)")
+
+(define port)
+(set! port (open-output-file "residuals.dat"))
+(do
+((i 0 (+ i 1)))
+((= i (length (solver-residuals))))
+(format port "~a ~2t" (car (list-ref (solver-residuals) i)))
+)
+(newline port)
+
 (cx-gui-do cx-activate-item "Run Calculation*Table1*PushButton22(Calculate)")
 (cx-use-window-id 1)
 (cx-set-camera-relative '(0 0 0) '(0 0 0) '(0 0 0) 0 0)

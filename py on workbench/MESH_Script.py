@@ -2,7 +2,7 @@
 #d change by main
 #ParallelCPU change by main
 #region Details View Action
-mesh1 = Model.Mesh
+#mesh1 = Model.Mesh   #new by main
 mesh1.ElementSize = Quantity(0.35, "mm")
 #endregion
 
@@ -11,7 +11,7 @@ mesh1.UseAutomaticInflation = 1
 #endregion
 
 #region Details View Action
-mesh1.NumberOfCPUsForParallelPartMeshing = NumberOfProcessors
+#mesh1.NumberOfCPUsForParallelPartMeshing = NumberOfProcessors
 #endregion
 #throat
 #region Context Menu Action
