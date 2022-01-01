@@ -1,0 +1,5 @@
+r'D:\Program Files\ANSYS Inc\v194'
+(cx-gui-do cx-set-text-entry "Open Database*TextEntry1(Database Name)" "G:/zxy/py on workbench/blood.scm")
+
+### line 1 = workbench dir
+### line 2 = material database dir 
