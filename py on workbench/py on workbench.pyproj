@@ -11,6 +11,7 @@
     <OutputPath>.</OutputPath>
     <Name>py on workbench</Name>
     <RootNamespace>py on workbench</RootNamespace>
+    <IsWindowsApplication>False</IsWindowsApplication>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>

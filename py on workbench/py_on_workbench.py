@@ -17,6 +17,8 @@ import datetime
 import platform
 import linecache
 import fileinput
+import xml.dom.minidom
+import xml.etree.cElementTree
 from PyWbUnit import CoWbUnitProcess
 from multiprocessing import cpu_count
 
@@ -80,8 +82,70 @@ print('Number of logical processors:'+str(cpu_count()))
 print()
 print('====================================================================================')
 
-# Input parameters
+#xml settings
+setfile=sys.path[0]+'//settings.xml'
+#get flag
+setf = xml.dom.minidom.parse(setfile)
+iset=setf.getElementsByTagName('is_seted')
+iset1=iset[0]
+flag=iset1.firstChild.data.strip('\n')
+while(not flag):
+    print()
+    print('Please define the workbench path:')
+    workbench_dir=input()
+    print('Please define the material database path:')
+    material_database_dir0=input()
+    print()
+    print('Initial setup is completed.')
+    print()
+    print('====================================================================================')
+    material_database_dir='(cx-gui-do cx-set-text-entry "Open Database*TextEntry1(Database Name)" "'+ material_database_dir0.replace('\\','/') +'/blood.scm")'
+    setfile=sys.path[0]+'//settings.xml'
+    updateTree = xml.etree.cElementTree.parse(setfile) 
+    root = updateTree.getroot()
+    wbdw=root.find('workbench_dir')
+    wbdw.text = workbench_dir
+    madw=root.find('material_database_dir')
+    madw.text = material_database_dir
+    isset=root.find('is_seted')
+    isset.text = 'True'
+    updateTree.write(setfile)
+    #get flag
+    setf = xml.dom.minidom.parse(setfile)
+    iset=setf.getElementsByTagName('is_seted')
+    iset1=iset[0]
+    flag=iset1.firstChild.data.strip('\n')
 
+#get two dir 
+setf = xml.dom.minidom.parse(setfile)
+root = setf.documentElement
+wbd=setf.getElementsByTagName('workbench_dir')
+wbd1=wbd[0]
+WorkbenchDir=wbd1.firstChild.data.strip('\n')
+mad=setf.getElementsByTagName('material_database_dir')
+mad1=mad[0]
+MaterialDir=mad1.firstChild.data.strip('\n')
+
+# Fluent setting
+NumberOfProcessors=int(cpu_count())-2
+NumberOfGPGPUs='1'
+
+# Work setting
+# Use relative paths instead
+SCDMscriptname='SCDM_Script.py' 
+Meshscriptname='MESH_Script.py'
+Fluentscriptname='FLUENT_Script.jou'  
+Additerationscriptname='Add_Iteration_Script.jou'
+
+#change fluentscript
+def replacement(file, previousw, nextw):
+   for line in fileinput.input(file, inplace=1):
+       line = line.replace(previousw, nextw)
+       sys.stdout.write(line)
+var1 = "material database dir"
+replacement(Fluentscriptname, var1, MaterialDir)
+
+# Input parameters
 in_content="N"
 while(in_content!="Y"):
     print("Please define the work path:")
@@ -107,26 +171,6 @@ print()
 print("Initializing...")
 print()
 print('====================================================================================')
-
-# Fluent setting
-NumberOfProcessors=int(cpu_count())-2
-NumberOfGPGPUs='1'
-
-# Work setting
-# Use relative paths instead
-SCDMscriptname='SCDM_Script.py' 
-Meshscriptname='MESH_Script.py'
-Fluentscriptname='FLUENT_Script.jou'   #line 17 (cx-gui-do cx-set-text-entry "Open Database*TextEntry1(Database Name)" "G:/zxy/py on workbench/blood.scm") Change the datebase path
-Additerationscriptname='Add_Iteration_Script.jou'
-setfile='settings.set'
-WorkbenchDir = linecache.getline(setfile, 1).strip('\n')
-MaterialDir = linecache.getline(setfile, 2).strip('\n')
-def replacement(file, previousw, nextw):
-   for line in fileinput.input(file, inplace=1):
-       line = line.replace(previousw, nextw)
-       sys.stdout.write(line)
-var1 = "material database dir"
-replacement(Fluentscriptname, var1, MaterialDir)
 
 # loop
 i=0
@@ -264,7 +308,7 @@ while(i<int(n)):
                             print('z-velocity= {:.4e}'.format(float(a[3])))
                             print('         k= {:.4e}'.format(float(a[4])))	
                             print('     omega= {:.4e}'.format(float(a[5])))
-                            print(' delta mfl= {:.4e}'.format(float(b[1])))  #delta mass flow
+                            print(' delta mfr= {:.4e}'.format(float(b[1])))  #delta mass flow rate
                             print('    p-head= {:.4e} Pa'.format(float(c[1])))
                             print('          = {:.4e} mmHg'.format(float(c[1])*0.0075))
                             print()

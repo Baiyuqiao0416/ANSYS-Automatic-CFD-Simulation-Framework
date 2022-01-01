@@ -141,5 +141,3 @@ result = NamedSelection.Create(primarySelection, secondarySelection)
 # Rename Named Selection
 result = NamedSelection.Rename("Group1", "outlet")
 # EndBlock
-
-#DocumentSave.Execute("E:\OneDrive - stu.suda.edu.cn\Resistance Valve\test2\ID_16.scdoc", ExportOptions.Create())
