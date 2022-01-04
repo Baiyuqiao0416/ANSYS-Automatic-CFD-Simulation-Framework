@@ -81,15 +81,19 @@ def replacement(file, previousw, nextw):
        line = line.replace(previousw, nextw)
        sys.stdout.write(line)
 
-#if last_phead <±5 than the previous one
-def compare_last10_phead(file):
+#count the total lines
+def count_lines(file):
     count = -1
     for count, line in enumerate(open(file, 'rb')):
         pass
         count += 1
+    return count
+
+#if last_phead <±5 than the previous one
+def compare_last10_phead(file):
+    count = count_lines(file)
     i=10
-    j=0  
-    print(count)  
+    j=0    
     while(i>0):
         text1=linecache.getline(file,count-i).split()
         text2=linecache.getline(file,count-i+1).split()
@@ -296,16 +300,12 @@ while(i<int(n)):
     count = -1
     countnext=0
     while(1):
-        count = -1
-        for count, line in enumerate(open(fname_residuals, 'rb')):
-            pass
-        count += 1       
+        count = count_lines(fname_residuals)      
         if(countnext==count+1):
             print('['+datetime.datetime.now().strftime('%F %T')+']\0'+str(count-1)+' iterations completed.')
             break
         countnext=count+1
         time.sleep(30)       #Iteration time per step
-
     iteration=count
     i=0
     while(True):
@@ -338,10 +338,7 @@ while(i<int(n)):
             i+=2
             count = -1
             while(1):
-                count = -1
-                for count, line in enumerate(open(fname_residuals, 'rb')):
-                    pass
-                count += 1
+                count = count_lines(fname_residuals)   
                 if(countnext==count+1):
                     print('['+datetime.datetime.now().strftime('%F %T')+']\0'+str(count-i)+' iterations completed.')
                     break
