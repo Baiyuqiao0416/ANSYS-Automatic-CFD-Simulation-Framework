@@ -2,8 +2,13 @@ import sys
 import xml.etree.cElementTree
 
 setfile=sys.path[0]+'//settings.xml'
-updateTree = xml.etree.cElementTree.parse(setfile) 
-root = updateTree.getroot()
-isset=root.find('is_seted')
-isset.text = 'False'
-updateTree.write(setfile)
+def xml_changedata(dir,tagname,tagtext):
+    updateTree = xml.etree.cElementTree.parse(dir) 
+    root = updateTree.getroot()
+    tag=root.find(tagname)
+    tag.text = tagtext
+    updateTree.write(dir)
+
+xml_changedata(setfile,'workbench_dir','default_workbench_dir')
+xml_changedata(setfile,'material_database_dir','defaule_material_database_dir')
+xml_changedata(setfile,'is_seted','False')

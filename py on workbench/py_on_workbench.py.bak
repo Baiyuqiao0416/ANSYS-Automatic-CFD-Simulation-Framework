@@ -46,64 +46,6 @@ class Logger(object):
 sys.stdout = Logger(sys.stdout)  # write console to log
 sys.stderr = Logger(sys.stderr)  # write err to log 
 
-#xml
-def xml_getdata(dir,tagname):
-    file = xml.dom.minidom.parse(dir)
-    tagtext=file.getElementsByTagName(tagname)
-    tagtext1=tagtext[0]
-    return tagtext1.firstChild.data.strip('\n')
-def xml_changedata(dir,tagname,tagtext):
-    updateTree = xml.etree.cElementTree.parse(dir) 
-    root = updateTree.getroot()
-    tag=root.find(tagname)
-    tag.text = tagtext
-    updateTree.write(dir)
-
-#last line
-def get_last_line(filedir):
-    file=open(filedir, 'rb')
-    off = -50                     #offset
-    while True:
-        file.seek(off, 2)            #seek(off, 2)represents the file pointer: 50 characters (-50) forward from the end of the file (2)
-        lines = file.readlines()     #Read all lines in the file pointer range
-        if len(lines)>=2:         #Determine whether there are at least two lines at the end, so as to ensure that the last line is complete
-            last_line = lines[-1] #Take the last line
-            break
-        #If the readlines obtained when off is 50, there is only one line of content, then there is no guarantee that the last line is complete
-        #So the off doubles and reruns until the readlines is more than one line
-        off *= 2
-    file.close()
-    return last_line.split()
-
-#replace specific line
-def replacement(file, previousw, nextw):
-   for line in fileinput.input(file, inplace=1):
-       line = line.replace(previousw, nextw)
-       sys.stdout.write(line)
-
-#if last_phead <±5 than the previous one
-def compare_last10_phead(file):
-    count = -1
-    for count, line in enumerate(open(file, 'rb')):
-        pass
-        count += 1
-    i=10
-    j=0  
-    print(count)  
-    while(i>0):
-        text1=linecache.getline(file,count-i).split()
-        text2=linecache.getline(file,count-i+1).split()
-        p1=int(text1[1])
-        p2=int(text2[1])
-        dp=p2-p1
-        if(dp<5 and dp>-5):
-            j+=1
-        i-=1
-    if(j==10):
-        return True
-    else:
-        return False
-
 print()
 print('====================================================================================')
 print()
@@ -144,7 +86,10 @@ print('=========================================================================
 #xml settings
 setfile=sys.path[0]+'//settings.xml'
 #get flag
-flag=bool(util.strtobool(xml_getdata(setfile,'is_seted')))
+setf = xml.dom.minidom.parse(setfile)
+iset=setf.getElementsByTagName('is_seted')
+iset1=iset[0]
+flag=bool(util.strtobool(iset1.firstChild.data.strip('\n')))
 if(flag):
     print()
     print('Initial setup is completed.')
@@ -161,15 +106,31 @@ while(not flag):
     print()
     print('====================================================================================')
     material_database_dir='(cx-gui-do cx-set-text-entry "Open Database*TextEntry1(Database Name)" "'+ material_database_dir0.replace('\\','/') +'/blood.scm")'
-    xml_changedata(setfile,'workbench_dir',workbench_dir)
-    xml_changedata(setfile,'material_database_dir',material_database_dir)
-    xml_changedata(setfile,'is_seted','True')
+    setfile=sys.path[0]+'//settings.xml'
+    updateTree = xml.etree.cElementTree.parse(setfile) 
+    root = updateTree.getroot()
+    wbdw=root.find('workbench_dir')
+    wbdw.text = workbench_dir
+    madw=root.find('material_database_dir')
+    madw.text = material_database_dir
+    isset=root.find('is_seted')
+    isset.text = 'True'
+    updateTree.write(setfile)
     #get flag
-    flag=bool(util.strtobool(xml_getdata(setfile,'is_seted')))
+    setf = xml.dom.minidom.parse(setfile)
+    iset=setf.getElementsByTagName('is_seted')
+    iset1=iset[0]
+    flag=iset1.firstChild.data.strip('\n')
 
 #get two dir 
-WorkbenchDir = xml_getdata(setfile,'workbench_dir')
-MaterialDir = xml_getdata(setfile,'material_database_dir')
+setf = xml.dom.minidom.parse(setfile)
+root = setf.documentElement
+wbd=setf.getElementsByTagName('workbench_dir')
+wbd1=wbd[0]
+WorkbenchDir=wbd1.firstChild.data.strip('\n')
+mad=setf.getElementsByTagName('material_database_dir')
+mad1=mad[0]
+MaterialDir=mad1.firstChild.data.strip('\n')
 
 # Fluent setting
 NumberOfProcessors=int(cpu_count())-2
@@ -183,6 +144,10 @@ Fluentscriptname='FLUENT_Script.scm'
 Additerationscriptname='Add_Iteration_Script.scm'
 
 #change fluentscript
+def replacement(file, previousw, nextw):
+   for line in fileinput.input(file, inplace=1):
+       line = line.replace(previousw, nextw)
+       sys.stdout.write(line)
 var1 = "material database dir"
 replacement(Fluentscriptname, var1, MaterialDir)
 
@@ -242,7 +207,6 @@ while(i<int(n)):
     coWbUnit.execWbCommand('SCDMcmd="""'+SCDMcmd+'"""')
     coWbUnit.execWbCommand('Geometry1.SendCommand(Language="Python",Command=SCDMcmd)')
     coWbUnit.execWbCommand('Geometry1.Exit()')
-    SCDMscript.close()
     print('['+datetime.datetime.now().strftime('%F %T')+']\0'+name+'\0SCDM Completed.')
 
     # Meshing
@@ -260,7 +224,6 @@ while(i<int(n)):
     coWbUnit.execWbCommand('Mesh1.SendCommand(Language="Python",Command=Meshcmd)')
     coWbUnit.execWbCommand('Mesh1.Exit()')
     coWbUnit.execWbCommand('MeshComponent1.Update(AllDependencies=True)')
-    Meshscript.close()
     print('['+datetime.datetime.now().strftime('%F %T')+']\0'+name+'\0Meshing Completed.')
     
     coWbUnit.saveProject(workpath+"\\"+name+"\\"+wbpjname)
@@ -284,7 +247,6 @@ while(i<int(n)):
         Fluentline=Fluentline.strip('\n')
         coWbUnit.execWbCommand('setup1.SendCommand("""'+Fluentline+'""")')
         Fluentline=Fluentscript.readline()
-    Fluentscript.close()
     #time.sleep(120)
     #if residual > 1e-05 , excute another journal to increase the iteration (up to 10000 iterations)
     
@@ -308,56 +270,106 @@ while(i<int(n)):
 
     iteration=count
     i=0
-    while(True):
-        a=get_last_line(fname_residuals)
-        b=get_last_line(fname_d_mfr)
-        c=get_last_line(fname_p_head)
-        print()
-        print('iterations= '+str(iteration))
-        print('continuity= {:.4e}'.format(float(a[0])))
-        print('x-velocity= {:.4e}'.format(float(a[1])))
-        print('y-velocity= {:.4e}'.format(float(a[2])))
-        print('z-velocity= {:.4e}'.format(float(a[3])))
-        print('         k= {:.4e}'.format(float(a[4])))	
-        print('     omega= {:.4e}'.format(float(a[5])))
-        print(' delta mfr= {:.4e}'.format(float(b[1])))  #delta mass flow rate
-        print('    p-head= {:.4e} Pa'.format(float(c[1])))
-        print('          = {:.4e} mmHg'.format(float(c[1])*0.0075))
-        print()
-        if(i==4):
-            break
-        if(not compare_last10_phead(fname_p_head)):
-            print('Not converged, add 2000 iterations.')
-            Additerationscript=open(Additerationscriptname,"r",encoding='utf-8')
-            Additerationcmd=Additerationscript.readline()
-            while Additerationcmd:
-                Additerationcmd=Additerationcmd.strip('\n')
-                coWbUnit.execWbCommand('setup1.SendCommand(Command="""'+Additerationcmd+'""")')
-                Additerationcmd=Additerationscript.readline()
-            Additerationscript.close()
-            i+=2
-            count = -1
-            while(1):
-                count = -1
-                for count, line in enumerate(open(fname_residuals, 'rb')):
-                    pass
-                count += 1
-                if(countnext==count+1):
-                    print('['+datetime.datetime.now().strftime('%F %T')+']\0'+str(count-i)+' iterations completed.')
-                    break
-                countnext=count+1
-                time.sleep(30)          #Iteration time per step
-            iteration+=(count-i)
-        else:
-            print('Converged.')
-            break
+    with open(fname_residuals, 'rb') as fr:      #open file
+            with open(fname_p_head, 'rb') as fp:
+                    with open(fname_d_mfr, 'rb') as fm:
+                        while(True):
+                            #residuals
+                            off = -50                     #offset
+                            while True:
+                                fr.seek(off, 2)            #seek(off, 2)represents the file pointer: 50 characters (-50) forward from the end of the file (2)
+                                lines = fr.readlines()     #Read all lines in the file pointer range
+                                if len(lines)>=2:         #Determine whether there are at least two lines at the end, so as to ensure that the last line is complete
+                                    last_line1 = lines[-1] #Take the last line
+                                    break
+                                #If the readlines obtained when off is 50, there is only one line of content, then there is no guarantee that the last line is complete
+                                #So the off doubles and reruns until the readlines is more than one line
+                                off *= 2
+                            #d_mfr
+                            off = -50                    
+                            while True:
+                                fm.seek(off, 2)            
+                                lines = fm.readlines()     
+                                if len(lines)>=2:         
+                                    last_line2 = lines[-1] 
+                                    break                            
+                                off *= 2
+                            #p_head
+                            off = -50                    
+                            while True:
+                                fp.seek(off, 2)            
+                                lines = fp.readlines()     
+                                if len(lines)>=2:         
+                                    last_line3 = lines[-1] 
+                                    break                            
+                                off *= 2
+                            a=last_line1.split()
+                            b=last_line2.split()
+                            c=last_line3.split()
+                            print()
+                            print('iterations= '+str(iteration))
+                            print('continuity= {:.4e}'.format(float(a[0])))
+                            print('x-velocity= {:.4e}'.format(float(a[1])))
+                            print('y-velocity= {:.4e}'.format(float(a[2])))
+                            print('z-velocity= {:.4e}'.format(float(a[3])))
+                            print('         k= {:.4e}'.format(float(a[4])))	
+                            print('     omega= {:.4e}'.format(float(a[5])))
+                            print(' delta mfr= {:.4e}'.format(float(b[1])))  #delta mass flow rate
+                            print('    p-head= {:.4e} Pa'.format(float(c[1])))
+                            print('          = {:.4e} mmHg'.format(float(c[1])*0.0075))
+                            print()
+                            if(i==4):
+                                break
+                            if(((float(b[1])-1)>1e-05 and float(a[0])>1e-05) or ((float(b[1])-1)>1e-05 and float(a[0])<=1e-05) or float(a[1])>1e-05 or float(a[2])>1e-05 or float(a[3])>1e-05 or float(a[4])>1e-05 or float(a[5])>1e-05):
+                                print('Not converged, add 2000 iterations.')
+                                Additerationscript=open(Additerationscriptname,"r",encoding='utf-8')
+                                Additerationcmd=Additerationscript.readline()
+                                while Additerationcmd:
+                                    Additerationcmd=Additerationcmd.strip('\n')
+                                    coWbUnit.execWbCommand('setup1.SendCommand(Command="""'+Additerationcmd+'""")')
+                                    Additerationcmd=Additerationscript.readline()
+                                Additerationscript.close()
+                                i+=2
+                                count = -1
+                                while(1):
+                                    count = -1
+                                    for count, line in enumerate(open(fname_residuals, 'rb')):
+                                        pass
+                                    count += 1
+                                    if(countnext==count+1):
+                                        print('['+datetime.datetime.now().strftime('%F %T')+']\0'+str(count-i)+' iterations completed.')
+                                        break
+                                    countnext=count+1
+                                    time.sleep(30)          #Iteration time per step
+                                iteration+=(count-i)
+                            else:
+                                print('Converged.')
+                                break
 
-    #after add iterations still not converged
-    if(not compare_last10_phead(fname_p_head)):
+    with open(fname_residuals, 'rb') as fr:   
+         off = -50                     
+         while True:
+             fr.seek(off, 2)            
+             lines = fr.readlines()     
+             if len(lines)>=2:         
+                 last_line1 = lines[-1] 
+                 break                
+             off *= 2
+         a=last_line1.split()
+    with open(fname_d_mfr, 'rb') as fm:   
+         off = -50                     
+         while True:
+             fm.seek(off, 2)            
+             lines = fm.readlines()     
+             if len(lines)>=2:         
+                 last_line2 = lines[-1] 
+                 break                
+             off *= 2
+         b=last_line2.split()
+    if(((float(b[1])-1)>1e-05 and float(a[0])>1e-05) or ((float(b[1])-1)>1e-05 and float(a[0])<=1e-05) or float(a[1])>1e-05 or float(a[2])>1e-05 or float(a[3])>1e-05 or float(a[4])>1e-05 or float(a[5])>1e-05):
         print('['+datetime.datetime.now().strftime('%F %T')+']\0'+'---Not converged---')
         shutil.move(workpath+"\\"+name,workpath+"\\"+name+"Not converged")
 
-    #exit fluent
     coWbUnit.execWbCommand('setup1.Exit()')
     print('['+datetime.datetime.now().strftime('%F %T')+']\0'+name+'\0Fluent Completed.')
 

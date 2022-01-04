@@ -25,7 +25,7 @@ throat_sizing.Location = selection
 #endregion
 
 #region Details View Action
-throat_sizing.ElementSize = Quantity(0.1*d, "mm")
+throat_sizing.ElementSize = Quantity(0.075*d, "mm")
 #endregion
 #out tube
 #region Context Menu Action

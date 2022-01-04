@@ -14,7 +14,7 @@
 (cx-gui-do cx-activate-item "NavigationPane*List_Tree1")
 (cx-gui-do cx-set-list-tree-selections "NavigationPane*List_Tree1" (list "Setup|Materials|Fluid|air"))
 (cx-gui-do cx-activate-item "Create/Edit Materials*Table1*Frame1*Frame2*ButtonBox2*PushButton2(User-Defined Database)")
-material database dir
+(cx-gui-do cx-set-text-entry "Open Database*TextEntry1(Database Name)" "E:/py_on_workbench/py on workbench/blood.scm")
 (cx-gui-do cx-activate-item "Open Database*PanelButtons*PushButton1(OK)")
 (cx-gui-do cx-set-list-selections "User-Defined Database Materials*Table1*Frame1*List1(Materials)" '( 0))
 (cx-gui-do cx-activate-item "User-Defined Database Materials*Table1*Frame1*List1(Materials)")
@@ -180,9 +180,9 @@ material database dir
 (cx-gui-do cx-set-list-tree-selections "NavigationPane*List_Tree1" (list "Solution|Run Calculation"))
 (cx-gui-do cx-set-expression-entry "Run Calculation*Table1*Table7*ExpressionEntry1(Time Step Size)" '("1e-5" . 0))
 (cx-gui-do cx-activate-item "Run Calculation*Table1*Table7*ExpressionEntry1(Time Step Size)")
-(cx-gui-do cx-set-integer-entry "Run Calculation*Table1*Table7*IntegerEntry2(Number of Time Steps)" 200)
+(cx-gui-do cx-set-integer-entry "Run Calculation*Table1*Table7*IntegerEntry2(Number of Time Steps)" 240)
 (cx-gui-do cx-activate-item "Run Calculation*Table1*Table7*IntegerEntry2(Number of Time Steps)")
-(cx-gui-do cx-set-integer-entry "Run Calculation*Table1*IntegerEntry10(Number of Iterations)" 30)
+(cx-gui-do cx-set-integer-entry "Run Calculation*Table1*IntegerEntry10(Number of Iterations)" 25)
 (cx-gui-do cx-activate-item "Run Calculation*Table1*IntegerEntry10(Number of Iterations)")
 (cx-gui-do cx-activate-item "Run Calculation*Table1*PushButton22(Calculate)")
 

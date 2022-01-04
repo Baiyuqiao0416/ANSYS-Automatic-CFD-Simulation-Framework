@@ -11,7 +11,7 @@
 (cx-gui-do cx-set-list-tree-selections "NavigationPane*List_Tree1" (list "Solution|Run Calculation"))
 (cx-gui-do cx-activate-item "NavigationPane*List_Tree1")
 (cx-gui-do cx-set-list-tree-selections "NavigationPane*List_Tree1" (list "Solution|Run Calculation"))
-(cx-gui-do cx-set-integer-entry "Run Calculation*Table1*Table7*IntegerEntry2(Number of Time Steps)" 67)
+(cx-gui-do cx-set-integer-entry "Run Calculation*Table1*Table7*IntegerEntry2(Number of Time Steps)" 80)
 (cx-gui-do cx-activate-item "Run Calculation*Table1*Table7*IntegerEntry2(Number of Time Steps)")
 (cx-gui-do cx-activate-item "Run Calculation*Table1*PushButton22(Calculate)")
 (cx-gui-do cx-activate-item "Settings have changed!*PanelButtons*PushButton1(OK)")
