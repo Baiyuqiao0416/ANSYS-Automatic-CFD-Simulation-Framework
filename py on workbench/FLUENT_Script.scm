@@ -14,7 +14,7 @@
 (cx-gui-do cx-activate-item "NavigationPane*List_Tree1")
 (cx-gui-do cx-set-list-tree-selections "NavigationPane*List_Tree1" (list "Setup|Materials|Fluid|air"))
 (cx-gui-do cx-activate-item "Create/Edit Materials*Table1*Frame1*Frame2*ButtonBox2*PushButton2(User-Defined Database)")
-(cx-gui-do cx-set-text-entry "Open Database*TextEntry1(Database Name)" "E:/py_on_workbench/py on workbench/blood.scm")
+material database dir
 (cx-gui-do cx-activate-item "Open Database*PanelButtons*PushButton1(OK)")
 (cx-gui-do cx-set-list-selections "User-Defined Database Materials*Table1*Frame1*List1(Materials)" '( 0))
 (cx-gui-do cx-activate-item "User-Defined Database Materials*Table1*Frame1*List1(Materials)")

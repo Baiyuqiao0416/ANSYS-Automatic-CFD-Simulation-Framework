@@ -172,8 +172,8 @@ while(not flag):
     flag=bool(util.strtobool(xml_getdata(setfile,'is_seted')))
 
 #get two dir 
-WorkbenchDir = xml_getdata(setfile,'workbench_dir')
-MaterialDir = xml_getdata(setfile,'material_database_dir')
+WorkbenchDir = str(xml_getdata(setfile,'workbench_dir'))
+MaterialDir = str(xml_getdata(setfile,'material_database_dir'))
 
 # Fluent setting
 NumberOfProcessors=int(cpu_count())-2
