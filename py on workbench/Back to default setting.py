@@ -1,3 +1,4 @@
+import os
 import sys
 import xml.etree.cElementTree
 
@@ -12,3 +13,6 @@ def xml_changedata(dir,tagname,tagtext):
 xml_changedata(setfile,'workbench_dir','default_workbench_dir')
 xml_changedata(setfile,'material_database_dir','defaule_material_database_dir')
 xml_changedata(setfile,'is_seted','False')
+
+print('Back to default setting is conpleted.')
+os.system('pause')
