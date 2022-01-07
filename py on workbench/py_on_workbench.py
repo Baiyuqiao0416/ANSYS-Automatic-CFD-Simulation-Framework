@@ -375,9 +375,10 @@ while(i<int(n)):
         print('['+datetime.datetime.now().strftime('%F %T')+']\0'+name+'\0Fluent Completed.')
 
     except Exception as result:
+        print()
         print(result)
-        print("Program exception!")
-        os.system("pause")
+        print('['+datetime.datetime.now().strftime('%F %T')+'] Program exception!')
+        print()
 
     finally:
         #Save
@@ -389,7 +390,8 @@ while(i<int(n)):
         deltat=int(t1)-int(t0) 
         ET=datetime.timedelta(seconds=deltat)
         ETA=datetime.timedelta(seconds=deltat*(int(n)-int(i)-1))
-        print(str(((i+1)/int(n))*100)+'% ('+str(i+1)+'of'+n+') [Elapsed Time:'+str(ET)+'] [ETA: '+str(ETA)+']')
+        percentage=round(((i+1)/int(n))*100,2)
+        print('\0'+str(percentage)+' % ( '+str(i+1)+' of '+n+' ) [Elapsed Time: '+str(ET)+' ] [ETA: '+str(ETA)+' ]')
         i+=1
 
 print()
