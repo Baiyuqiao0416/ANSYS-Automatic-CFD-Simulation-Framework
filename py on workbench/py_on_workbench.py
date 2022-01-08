@@ -104,16 +104,25 @@ def compare_last10_phead(file):
     while(i>0):
         text1=linecache.getline(file,count-i).split()
         text2=linecache.getline(file,count-i+1).split()
-        p1=int(text1[1])
-        p2=int(text2[1])
+        p1=float(text1[1])
+        p2=float(text2[1])
         dp=p2-p1
-        if(dp<5 and dp>-5):
+        if(dp<5.0 and dp>-5.0):
             j+=1
         i-=1
     if(j==10):
         return True
     else:
         return False
+
+#Determine whether the calculation is complete
+def wait_caculation():
+    while(True):
+        cpu_percent=cpu_usage()
+        if(cpu_percent < 90.0 and cpu_percent != 0.0):
+            break
+        else:
+            time.sleep(120)
 
 print()
 print('====================================================================================')
@@ -158,7 +167,7 @@ setfile=sys.path[0]+'//settings.xml'
 flag=bool(util.strtobool(xml_getdata(setfile,'is_seted')))
 if(flag):
     print()
-    print('Initial setup is completed.')
+    print('                             Initial setup is completed.                            ')
     print()
     print('====================================================================================')
 while(not flag):
@@ -220,188 +229,194 @@ while(in_content!="Y"):
     
 print('====================================================================================')
 print()
-print("Initializing...")
+print('                                  Initializing....                                  ')
 print()
 print('====================================================================================')
 
 # loop
 i=0
 while(i<int(n)):
-    d=decimal.Decimal(d0)+decimal.Decimal(step)*decimal.Decimal(i)
-    name=str(i+1)+"_"+str(d)+"mm"
-    wbpjname=name+".wbpj "
-    os.mkdir(workpath+"\\"+name)
-    
-    # Create an instance of the wb unit and specify the ansys wb version
-    coWbUnit = CoWbUnitProcess(WorkbenchDir, version=194, interactive=True) 
-    coWbUnit.initialize()
-    coWbUnit.execWbCommand('SetScriptVersion(Version="19.4.159")')
-    coWbUnit.execWbCommand('system1 = GetTemplate(TemplateName="Fluid Flow").CreateSystem()')
-
-    print()
-    print('====================================================================================')
-    print()
-    print('n='+str(i+1))
-    print('['+datetime.datetime.now().strftime('%F %T')+']\0'+name+'\0Workbench Initialized.')
-    t0=time.time()
-
-    # SCDM
-    coWbUnit.execWbCommand('Geometry1 = system1.GetContainer(ComponentName="Geometry")')
-    coWbUnit.execWbCommand('Geometry1.Edit(IsSpaceClaimGeometry=True)')
-    SCDMscript=open(SCDMscriptname,"r",encoding='utf-8')
-    SCDMcmd='d='+str(d)+'\n'+'NumberOfProcessors='+str(NumberOfProcessors)+'\n'+str(SCDMscript.read())
-    coWbUnit.execWbCommand('SCDMcmd="""'+SCDMcmd+'"""')
-    coWbUnit.execWbCommand('Geometry1.SendCommand(Language="Python",Command=SCDMcmd)')
-    coWbUnit.execWbCommand('Geometry1.Exit()')
-    SCDMscript.close()
-    print('['+datetime.datetime.now().strftime('%F %T')+']\0'+name+'\0SCDM Completed.')
-
-    # Meshing
-    coWbUnit.execWbCommand('MeshComponent1 = system1.GetComponent(Name="Mesh")')
-    coWbUnit.execWbCommand('MeshComponent1.Refresh()')
-    coWbUnit.execWbCommand('Mesh1 = system1.GetContainer(ComponentName="Mesh")')
-    coWbUnit.execWbCommand('Mesh1.Edit()')
-    Meshscript=open(Meshscriptname,"r",encoding='utf-8')
-    #Sizing of throat <=0.13125mm (0.075d)
-    if(d<=1.75):
-        Meshcmd='mesh1 = Model.Mesh'+'\n'+'mesh1.NumberOfCPUsForParallelPartMeshing='+str(NumberOfProcessors)+'\n'+'d='+str(d)+'\n'+str(Meshscript.read())
-    else:
-        Meshcmd='mesh1 = Model.Mesh'+'\n'+'mesh1.NumberOfCPUsForParallelPartMeshing='+str(NumberOfProcessors)+'\n'+'d=1.75'+'\n'+str(Meshscript.read())
-    coWbUnit.execWbCommand('Meshcmd="""'+Meshcmd+'"""')
-    coWbUnit.execWbCommand('Mesh1.SendCommand(Language="Python",Command=Meshcmd)')
-    coWbUnit.execWbCommand('Mesh1.Exit()')
-    coWbUnit.execWbCommand('MeshComponent1.Update(AllDependencies=True)')
-    Meshscript.close()
-    print('['+datetime.datetime.now().strftime('%F %T')+']\0'+name+'\0Meshing Completed.')
-    
     try:
-        coWbUnit.saveProject(workpath+"\\"+name+"\\"+wbpjname)
-        os.mkdir(workpath+"\\"+name+"\\"+name+"_files"+"\\dp0\\FFF\\Fluent")
-        # Fluent
-        source = "output_residual.jou"
-        target = workpath+"\\"+name+"\\"+name+"_files"+"\\dp0\\FFF\\Fluent"
-        shutil.copy(source, target)
-        source2 = "residuals.dat"
-        shutil.copy(source2, target)
-
-        coWbUnit.execWbCommand('setupComponent1 = system1.GetComponent(Name="Setup")')
-        coWbUnit.execWbCommand('setupComponent1.Refresh()')
-        coWbUnit.execWbCommand('setup1 = system1.GetContainer(ComponentName="Setup")')
-        coWbUnit.execWbCommand('fluentLauncherSettings1 = setup1.GetFluentLauncherSettings()')
-        coWbUnit.execWbCommand('fluentLauncherSettings1.SetEntityProperties(Properties=Set(Precision="Double", EnvPath={}, RunParallel=True, NumberOfProcessors='+str(NumberOfProcessors)+', NumberOfGPGPUs=1))')
-        coWbUnit.execWbCommand('setup1.Edit()')
-        Fluentscript=open(Fluentscriptname,"r",encoding='utf-8')
-        Fluentline=Fluentscript.readline()
-        while Fluentline:
-            Fluentline=Fluentline.strip('\n')
-            coWbUnit.execWbCommand('setup1.SendCommand("""'+Fluentline+'""")')
-            Fluentline=Fluentscript.readline()
-        Fluentscript.close()
-        #time.sleep(120)
-        #if residual > 1e-05 , excute another journal to increase the iteration (up to 10000 iterations)
+        d=decimal.Decimal(d0)+decimal.Decimal(step)*decimal.Decimal(i)
+        name=str(i+1)+"_"+str(d)+"mm"
+        wbpjname=name+".wbpj "
+        os.mkdir(workpath+"\\"+name)
         
-        fname_residuals = workpath+"\\"+name+"\\"+name+"_files"+"\\dp0\\FFF\\Fluent\\residuals.dat"
-        fname_p_head = workpath+"\\"+name+"\\"+name+"_files"+"\\dp0\\FFF\\Fluent\\p-head-rfile.out"
-        fname_d_mfr = workpath+"\\"+name+"\\"+name+"_files"+"\\dp0\\FFF\\Fluent\\diff-mfr-rfile.out"
+        # Create an instance of the wb unit and specify the ansys wb version
+        coWbUnit = CoWbUnitProcess(WorkbenchDir, version=194, interactive=True) 
+        coWbUnit.initialize()
+        coWbUnit.execWbCommand('SetScriptVersion(Version="19.4.159")')
+        coWbUnit.execWbCommand('system1 = GetTemplate(TemplateName="Fluid Flow").CreateSystem()')
 
-        #Determine whether the calculation is complete
-        while(True):
-            cpu_percent=cpu_usage()
-            if(cpu_percent < 90 and cpu_percent != 0.0):
-                break
-            else:
-                time.sleep(120)
-        
-        #lines of residuals.dat
-        count = -1
-        countnext=0
-        while(True):
-            count = count_lines(fname_residuals)      
-            if(countnext==count+1):
-                print('['+datetime.datetime.now().strftime('%F %T')+']\0'+str(count-1)+' iterations completed.')
-                break
-            countnext=count+1
-            time.sleep(30)       #Iteration time per step
-        iteration=count
-        i=0
-        while(True):
-            a=get_last_line(fname_residuals)
-            b=get_last_line(fname_d_mfr)
-            c=get_last_line(fname_p_head)
-            print()
-            print('iterations= '+str(iteration))
-            print('continuity= {:.4e}'.format(float(a[0])))
-            print('x-velocity= {:.4e}'.format(float(a[1])))
-            print('y-velocity= {:.4e}'.format(float(a[2])))
-            print('z-velocity= {:.4e}'.format(float(a[3])))
-            print('         k= {:.4e}'.format(float(a[4])))	
-            print('     omega= {:.4e}'.format(float(a[5])))
-            print(' delta mfr= {:.4e}'.format(float(b[1])))  #delta mass flow rate
-            print('    p-head= {:.4e} Pa'.format(float(c[1])))
-            print('          = {:.4e} mmHg'.format(float(c[1])*0.0075))
-            print()
-            if(i==4):
-                break
-            if(not compare_last10_phead(fname_p_head)):
-                print('Not converged, add 2000 iterations.')
-                Additerationscript=open(Additerationscriptname,"r",encoding='utf-8')
-                Additerationcmd=Additerationscript.readline()
-                while Additerationcmd:
-                    Additerationcmd=Additerationcmd.strip('\n')
-                    coWbUnit.execWbCommand('setup1.SendCommand(Command="""'+Additerationcmd+'""")')
-                    Additerationcmd=Additerationscript.readline()
-                Additerationscript.close()
-                i+=2
-                count = -1
-                while(1):
-                    count = count_lines(fname_residuals)   
-                    if(countnext==count+1):
-                        print('['+datetime.datetime.now().strftime('%F %T')+']\0'+str(count-i)+' iterations completed.')
-                        break
-                    countnext=count+1
-                    time.sleep(30)          #Iteration time per step
-                iteration+=(count-i)
-            else:
-                print('Converged.')
-                break
-
-        #after add iterations still not converged
-        if(not compare_last10_phead(fname_p_head)):
-            print('['+datetime.datetime.now().strftime('%F %T')+']\0'+'---Not converged---')
-            shutil.move(workpath+"\\"+name,workpath+"\\"+name+"Not converged")
-
-        #exit fluent
-        coWbUnit.execWbCommand('setup1.Exit()')
-        print('['+datetime.datetime.now().strftime('%F %T')+']\0'+name+'\0Fluent Completed.')
-
-    except Exception as result:
         print()
-        print(result)
+        print('====================================================================================')
+        print()
+        print('n='+str(i+1))
+        print('['+datetime.datetime.now().strftime('%F %T')+']\0'+name+'\0Workbench Initialized.')
+        t0=time.time()
+
+        # SCDM
+        coWbUnit.execWbCommand('Geometry1 = system1.GetContainer(ComponentName="Geometry")')
+        coWbUnit.execWbCommand('Geometry1.Edit(IsSpaceClaimGeometry=True)')
+        SCDMscript=open(SCDMscriptname,"r",encoding='utf-8')
+        SCDMcmd='d='+str(d)+'\n'+'NumberOfProcessors='+str(NumberOfProcessors)+'\n'+str(SCDMscript.read())
+        coWbUnit.execWbCommand('SCDMcmd="""'+SCDMcmd+'"""')
+        coWbUnit.execWbCommand('Geometry1.SendCommand(Language="Python",Command=SCDMcmd)')
+        coWbUnit.execWbCommand('Geometry1.Exit()')
+        SCDMscript.close()
+        print('['+datetime.datetime.now().strftime('%F %T')+']\0'+name+'\0SCDM Completed.')
+
+        # Meshing
+        coWbUnit.execWbCommand('MeshComponent1 = system1.GetComponent(Name="Mesh")')
+        coWbUnit.execWbCommand('MeshComponent1.Refresh()')
+        coWbUnit.execWbCommand('Mesh1 = system1.GetContainer(ComponentName="Mesh")')
+        coWbUnit.execWbCommand('Mesh1.Edit()')
+        Meshscript=open(Meshscriptname,"r",encoding='utf-8')
+        #Sizing of throat <=0.13125mm (0.075d)
+        if(d<=1.75):
+            Meshcmd='mesh1 = Model.Mesh'+'\n'+'mesh1.NumberOfCPUsForParallelPartMeshing='+str(NumberOfProcessors)+'\n'+'d='+str(d)+'\n'+str(Meshscript.read())
+        else:
+            Meshcmd='mesh1 = Model.Mesh'+'\n'+'mesh1.NumberOfCPUsForParallelPartMeshing='+str(NumberOfProcessors)+'\n'+'d=1.75'+'\n'+str(Meshscript.read())
+        coWbUnit.execWbCommand('Meshcmd="""'+Meshcmd+'"""')
+        coWbUnit.execWbCommand('Mesh1.SendCommand(Language="Python",Command=Meshcmd)')
+        coWbUnit.execWbCommand('Mesh1.Exit()')
+        coWbUnit.execWbCommand('MeshComponent1.Update(AllDependencies=True)')
+        Meshscript.close()
+        print('['+datetime.datetime.now().strftime('%F %T')+']\0'+name+'\0Meshing Completed.')
+        
+        try:
+            coWbUnit.saveProject(workpath+"\\"+name+"\\"+wbpjname)
+            os.mkdir(workpath+"\\"+name+"\\"+name+"_files"+"\\dp0\\FFF\\Fluent")
+            # Fluent
+            source = "output_residual.jou"
+            target = workpath+"\\"+name+"\\"+name+"_files"+"\\dp0\\FFF\\Fluent"
+            shutil.copy(source, target)
+            source2 = "residuals.dat"
+            shutil.copy(source2, target)
+
+            coWbUnit.execWbCommand('setupComponent1 = system1.GetComponent(Name="Setup")')
+            coWbUnit.execWbCommand('setupComponent1.Refresh()')
+            coWbUnit.execWbCommand('setup1 = system1.GetContainer(ComponentName="Setup")')
+            coWbUnit.execWbCommand('fluentLauncherSettings1 = setup1.GetFluentLauncherSettings()')
+            coWbUnit.execWbCommand('fluentLauncherSettings1.SetEntityProperties(Properties=Set(Precision="Double", EnvPath={}, RunParallel=True, NumberOfProcessors='+str(NumberOfProcessors)+', NumberOfGPGPUs=1))')
+            coWbUnit.execWbCommand('setup1.Edit()')
+            Fluentscript=open(Fluentscriptname,"r",encoding='utf-8')
+            Fluentline=Fluentscript.readline()
+            while Fluentline:
+                Fluentline=Fluentline.strip('\n')
+                coWbUnit.execWbCommand('setup1.SendCommand("""'+Fluentline+'""")')
+                Fluentline=Fluentscript.readline()
+            Fluentscript.close()
+            #time.sleep(120)
+            #if residual > 1e-05 , excute another journal to increase the iteration (up to 10000 iterations)
+            
+            fname_residuals = workpath+"\\"+name+"\\"+name+"_files"+"\\dp0\\FFF\\Fluent\\residuals.dat"
+            fname_p_head = workpath+"\\"+name+"\\"+name+"_files"+"\\dp0\\FFF\\Fluent\\p-head-rfile.out"
+            fname_d_mfr = workpath+"\\"+name+"\\"+name+"_files"+"\\dp0\\FFF\\Fluent\\diff-mfr-rfile.out"
+
+            #Determine whether the calculation is complete
+            wait_caculation()
+            
+            #lines of residuals.dat
+            count = -1
+            countnext=0
+            while(True):
+                count = count_lines(fname_residuals)      
+                if(countnext==count+1):
+                    print('['+datetime.datetime.now().strftime('%F %T')+']\0'+str(count-1)+' iterations completed.')
+                    break
+                countnext=count+1
+            iteration=count-1
+            i=0
+            while(True):
+                a=get_last_line(fname_residuals)
+                b=get_last_line(fname_d_mfr)
+                c=get_last_line(fname_p_head)
+                print()
+                print('iterations= '+str(iteration))
+                print('continuity= {:.4e}'.format(float(a[0])))
+                print('x-velocity= {:.4e}'.format(float(a[1])))
+                print('y-velocity= {:.4e}'.format(float(a[2])))
+                print('z-velocity= {:.4e}'.format(float(a[3])))
+                print('         k= {:.4e}'.format(float(a[4])))	
+                print('     omega= {:.4e}'.format(float(a[5])))
+                print(' delta mfr= {:.4e}'.format(float(b[1])))  #delta mass flow rate
+                print('    p-head= {:.4e} Pa'.format(float(c[1])))
+                print('          = {:.4e} mmHg'.format(float(c[1])*0.0075))
+                print()
+                if(i==4):
+                    break
+                if(not compare_last10_phead(fname_p_head)):
+                    print('Not converged, add 2000 iterations.')
+                    Additerationscript=open(Additerationscriptname,"r",encoding='utf-8')
+                    Additerationcmd=Additerationscript.readline()
+                    while Additerationcmd:
+                        Additerationcmd=Additerationcmd.strip('\n')
+                        coWbUnit.execWbCommand('setup1.SendCommand(Command="""'+Additerationcmd+'""")')
+                        Additerationcmd=Additerationscript.readline()
+                    Additerationscript.close()
+                    i+=2
+                    count = -1
+                    wait_caculation()
+                    while(True):
+                        count = count_lines(fname_residuals)   
+                        if(countnext==count+1):
+                            print('['+datetime.datetime.now().strftime('%F %T')+']\0'+str(count-i)+' iterations completed.')
+                            break
+                        countnext=count+1
+                    iteration+=(count-i)
+                else:
+                    print('Converged.')
+                    break
+
+            #after add iterations still not converged
+            if(not compare_last10_phead(fname_p_head)):
+                print('['+datetime.datetime.now().strftime('%F %T')+']\0'+'---Not converged---')
+                shutil.move(workpath+"\\"+name,workpath+"\\"+name+"Not converged")
+
+            #exit fluent
+            coWbUnit.execWbCommand('setup1.Exit()')
+            print('['+datetime.datetime.now().strftime('%F %T')+']\0'+name+'\0Fluent Completed.')
+
+        except Exception as e1:
+            print()
+            print(e1)
+            print('['+datetime.datetime.now().strftime('%F %T')+'] Fluent exception!')
+            print()
+
+        finally:
+            #Save
+            coWbUnit.saveProject(workpath+"\\"+name+"\\"+wbpjname)
+            coWbUnit.finalize()
+            print('['+datetime.datetime.now().strftime('%F %T')+']\0'+name+'\0Save Completed.')
+            print()    
+            t1=time.time()
+            deltat=int(t1)-int(t0) 
+            ET=datetime.timedelta(seconds=deltat)
+            ETA=datetime.timedelta(seconds=deltat*(int(n)-int(i)-1))
+            percentage=round(((i+1)/int(n))*100,2)
+            print('\0'+str(percentage)+' % ( '+str(i+1)+' of '+n+' ) [ Elapsed Time: '+str(ET)+' ] [ ETA: '+str(ETA)+' ]')
+            i+=1
+    except Exception as e2:
+        print()
+        print(e2)
         print('['+datetime.datetime.now().strftime('%F %T')+'] Program exception!')
         print()
-
     finally:
-        #Save
-        coWbUnit.saveProject(workpath+"\\"+name+"\\"+wbpjname)
-        coWbUnit.finalize()
-        print('['+datetime.datetime.now().strftime('%F %T')+']\0'+name+'\0Save Completed.')
-        print()    
-        t1=time.time()
-        deltat=int(t1)-int(t0) 
-        ET=datetime.timedelta(seconds=deltat)
-        ETA=datetime.timedelta(seconds=deltat*(int(n)-int(i)-1))
-        percentage=round(((i+1)/int(n))*100,2)
-        print('\0'+str(percentage)+' % ( '+str(i+1)+' of '+n+' ) [Elapsed Time: '+str(ET)+' ] [ETA: '+str(ETA)+' ]')
-        i+=1
+        print()
 
 print()
 print('====================================================================================')
 print()
 print('['+datetime.datetime.now().strftime('%F %T')+'] Work is completed.')
+print()
+print('====================================================================================')
 
 #exit
 replacement(Fluentscriptname, MaterialDir, var1) #change the script to origin
-os.system("pause")
+print()
+print('Press any key to continue...')
+input()
 print("The program will exit in ten seconds.")
 time.sleep(10)
 sys.exit()

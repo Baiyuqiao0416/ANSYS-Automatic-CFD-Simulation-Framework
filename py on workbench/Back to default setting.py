@@ -1,4 +1,3 @@
-import os
 import sys
 import xml.etree.cElementTree
 
@@ -14,5 +13,13 @@ xml_changedata(setfile,'workbench_dir','default_workbench_dir')
 xml_changedata(setfile,'material_database_dir','defaule_material_database_dir')
 xml_changedata(setfile,'is_seted','False')
 
-print('Back to default setting is conpleted.')
-os.system('pause')
+Fluentscript=open('FLUENT_Script.scm','r+')
+fs=Fluentscript.readlines()
+fs[16]='material database dir\n'
+Fluentscript=open('FLUENT_Script.scm','w+')
+Fluentscript.writelines(fs)
+
+print('Back to default setting is completed.')
+print('Press any key to continue...')
+input()
+sys.exit()
