@@ -186,7 +186,7 @@ material database dir
 (cx-gui-do cx-activate-item "Adaptive Time Step Settings*PanelButtons*PushButton1(OK)")
 (cx-gui-do cx-set-expression-entry "Run Calculation*Table1*Table7*ExpressionEntry1(Time Step Size)" '("1e-5" . 0))
 (cx-gui-do cx-activate-item "Run Calculation*Table1*Table7*ExpressionEntry1(Time Step Size)")
-(cx-gui-do cx-set-integer-entry "Run Calculation*Table1*Table7*IntegerEntry2(Number of Time Steps)" 320)
+(cx-gui-do cx-set-integer-entry "Run Calculation*Table1*Table7*IntegerEntry2(Number of Time Steps)" 500)
 (cx-gui-do cx-activate-item "Run Calculation*Table1*Table7*IntegerEntry2(Number of Time Steps)")
 (cx-gui-do cx-set-integer-entry "Run Calculation*Table1*IntegerEntry10(Number of Iterations)" 25)
 (cx-gui-do cx-activate-item "Run Calculation*Table1*IntegerEntry10(Number of Iterations)")

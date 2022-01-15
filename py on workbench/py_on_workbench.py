@@ -240,11 +240,13 @@ while(i<int(n)):
         d=decimal.Decimal(d0)+decimal.Decimal(step)*decimal.Decimal(i)
         name=str(i+1)+"_"+str(d)+"mm"
         wbpjname=name+".wbpj "
-        os.mkdir(workpath+"\\"+name)
+        if not os.path.exists(workpath+"\\"+name):
+            os.mkdir(workpath+"\\"+name)
         
         # Create an instance of the wb unit and specify the ansys wb version
         coWbUnit = CoWbUnitProcess(WorkbenchDir, version=194, interactive=True) 
         coWbUnit.initialize()
+        time.sleep(60)
         coWbUnit.execWbCommand('SetScriptVersion(Version="19.4.159")')
         coWbUnit.execWbCommand('system1 = GetTemplate(TemplateName="Fluid Flow").CreateSystem()')
 
@@ -327,7 +329,7 @@ while(i<int(n)):
                     break
                 countnext=count+1
             iteration=count-1
-            i=0
+            addcount=0
             while(True):
                 a=get_last_line(fname_residuals)
                 b=get_last_line(fname_d_mfr)
@@ -344,7 +346,7 @@ while(i<int(n)):
                 print('    p-head= {:.4e} Pa'.format(float(c[1])))
                 print('          = {:.4e} mmHg'.format(float(c[1])*0.0075))
                 print()
-                if(i==4):
+                if(addcount==4):
                     break
                 if(not compare_last10_phead(fname_p_head)):
                     print('Not converged, add 2000 iterations.')
@@ -355,16 +357,16 @@ while(i<int(n)):
                         coWbUnit.execWbCommand('setup1.SendCommand(Command="""'+Additerationcmd+'""")')
                         Additerationcmd=Additerationscript.readline()
                     Additerationscript.close()
-                    i+=2
+                    addcount+=2
                     count = -1
                     wait_caculation()
                     while(True):
                         count = count_lines(fname_residuals)   
                         if(countnext==count+1):
-                            print('['+datetime.datetime.now().strftime('%F %T')+']\0'+str(count-i)+' iterations completed.')
+                            print('['+datetime.datetime.now().strftime('%F %T')+']\0'+str(count-addcount)+' iterations completed.')
                             break
                         countnext=count+1
-                    iteration+=(count-i)
+                    iteration+=(count-addcount)
                 else:
                     print('Converged.')
                     break
@@ -402,8 +404,7 @@ while(i<int(n)):
         print(e2)
         print('['+datetime.datetime.now().strftime('%F %T')+'] Program exception!')
         print()
-    finally:
-        print()
+
 
 print()
 print('====================================================================================')
@@ -417,7 +418,7 @@ replacement(Fluentscriptname, MaterialDir, var1) #change the script to origin
 print()
 print('Press any key to continue...')
 input()
-print("The program will exit in ten seconds.")
+print("The program will terminate in ten seconds.")
 time.sleep(10)
 sys.exit()
 
