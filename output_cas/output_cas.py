@@ -12,7 +12,6 @@ import os
 import sys
 import time
 import shutil
-from typing_extensions import final
 import psutil 
 import decimal
 import datetime
@@ -201,7 +200,6 @@ NumberOfGPGPUs='1'
 SCDMscriptname='SCDM_Script.py' 
 Meshscriptname='MESH_Script.py'
 Fluentscriptname='FLUENT_output_cas.scm'  
-Additerationscriptname='Add_Iteration_Script.scm'
 
 #change fluentscript
 var1 = "material database dir"
@@ -234,6 +232,8 @@ print('                                  Initializing....                       
 print()
 print('====================================================================================')
 
+if not os.path.exists(workpath+"\\cas&dat"):
+    os.mkdir(workpath+"\\cas&dat")
 # loop
 i=0
 while(i<int(n)):
@@ -291,11 +291,6 @@ while(i<int(n)):
             coWbUnit.saveProject(workpath+"\\"+name+"\\"+wbpjname)
             os.mkdir(workpath+"\\"+name+"\\"+name+"_files"+"\\dp0\\FFF\\Fluent")
             # Fluent
-            source = "output_residual.jou"
-            target = workpath+"\\"+name+"\\"+name+"_files"+"\\dp0\\FFF\\Fluent"
-            shutil.copy(source, target)
-            source2 = "residuals.dat"
-            shutil.copy(source2, target)
 
             coWbUnit.execWbCommand('setupComponent1 = system1.GetComponent(Name="Setup")')
             coWbUnit.execWbCommand('setupComponent1.Refresh()')
@@ -326,7 +321,24 @@ while(i<int(n)):
             coWbUnit.saveProject(workpath+"\\"+name+"\\"+wbpjname)
             coWbUnit.finalize()
             print('['+datetime.datetime.now().strftime('%F %T')+']\0'+name+'\0Save Completed.')
-            print()    
+            print()
+
+            #copy cas&dat to a new folder
+            source = workpath+"\\"+name+"\\"+name+"_files"+"\\dp0\\FFF\\Fluent\\FFF-1.cas.gz"
+            target = workpath+"\\cas&dat"
+            shutil.copy(source, target)
+            source2 = workpath+"\\"+name+"\\"+name+"_files"+"\\dp0\\FFF\\Fluent\\FFF-1-00000.dat.gz"
+            shutil.copy(source2, target)
+
+            renamesource=workpath+"\\cas&dat\\FFF-1.cas.gz"
+            renametarget=workpath+"\\cas&dat\\"+name+".cas.gz"
+            if os.path.exists(renamesource):
+                os.rename(renamesource,renametarget)
+            renamesource2=workpath+"\\cas&dat\\FFF-1-00000.dat.gz"
+            renametarget2=workpath+"\\cas&dat\\"+name+".dat.gz"
+            if os.path.exists(renamesource2):
+                os.rename(renamesource2,renametarget2)
+            
             t1=time.time()
             deltat=int(t1)-int(t0) 
             ET=datetime.timedelta(seconds=deltat)
