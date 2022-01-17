@@ -14,7 +14,7 @@ The work flow is:
 
 ##output residuals
 
-5.	We can read the residuals.dat to determine if it converges. If not converged, execute the ‘add_iteration.scm’ to add iterations.
+5.	We can read the residuals.dat to determine if it converges. If not converged, execute the 'add_iteration.scm' to add iterations.
 6.	After calculation save the project and create a new one.
 
 
