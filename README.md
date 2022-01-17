@@ -2,9 +2,8 @@
 ## This is a demo of the CFD simulation co-operation of the python and the ANSYS Workbench.
 
 List of external packages:  
-PyWbUnit  
+PyWbUnit  (https://github.com/ansys-dev/PyWbUnit)
 psutil   
-还有一个待补充
 
 The work flow is: 
 1.	SCDM change the parameters of the single geometry. The script is generated automatically by the space claim. Because the language of the script is Iron python, we can define several variables, organize and normalize the geometric parameters, and finally modify the parameters in the main program to complete the automatic iteration of the geometry.
