@@ -12,7 +12,7 @@ def count_lines(file):
         count += 1
     return count
 
-#if last_phead <±5 than the previous one. Compare 10 dp.
+#if last 1-10 phead average <±5 than the previous 2-11. Compare 10 dp.
 def compare_phead(file):
     count = count_lines(file)
     i=0

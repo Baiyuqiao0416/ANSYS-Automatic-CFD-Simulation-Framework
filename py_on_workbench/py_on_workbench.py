@@ -96,24 +96,33 @@ def count_lines(file):
         count += 1
     return count
 
-#if last_phead <±5 than the previous one
-def compare_last10_phead(file):
+#if last 1-10 phead average <±5 than the previous 2-11. Compare 10 dp.
+def compare_phead(file):
     count = count_lines(file)
-    i=10
-    j=0    
-    while(i>0):
+    i=0
+    p=[0 for x in range(0, 20)]
+    while(i<20):
         text1=linecache.getline(file,count-i).split()
-        text2=linecache.getline(file,count-i+1).split()
-        p1=float(text1[1])
-        p2=float(text2[1])
-        dp=p2-p1
-        if(dp<5.0 and dp>-5.0):
-            j+=1
-        i-=1
-    if(j==10):
-        return True
+        p[i]=float(text1[1])
+        i+=1
+    m=0
+    j=0
+    while(j<10):
+        k=0
+        sum1=sum2=0
+        while(j+k<=j+9):
+            sum1+=p[k+j]
+            sum2+=p[k+j+1]
+            k+=1
+        avg_dp=(sum1-sum2)/10
+        j+=1
+        if(avg_dp >= -5 and avg_dp <= 5):
+            m+=1
+    if(m==10):
+        result=(sum1+sum2)/20
+        return result  #Pa
     else:
-        return False
+        return '0'
 
 #Determine whether the calculation is complete
 def wait_caculation():
@@ -333,7 +342,7 @@ while(i<int(n)):
             while(True):
                 a=get_last_line(fname_residuals)
                 b=get_last_line(fname_d_mfr)
-                c=get_last_line(fname_p_head)
+                c=compare_phead(fname_p_head)
                 print()
                 print('iterations= '+str(iteration))
                 print('continuity= {:.4e}'.format(float(a[0])))
@@ -343,12 +352,12 @@ while(i<int(n)):
                 print('         k= {:.4e}'.format(float(a[4])))	
                 print('     omega= {:.4e}'.format(float(a[5])))
                 print(' delta mfr= {:.4e}'.format(float(b[1])))  #delta mass flow rate
-                print('    p-head= {:.4e} Pa'.format(float(c[1])))
-                print('          = {:.4e} mmHg'.format(float(c[1])*0.0075))
+                print('    p-head= {:.4e} Pa'.format(float(c)))
+                print('          = {:.4e} mmHg'.format(float(c)*0.0075))
                 print()
                 if(addcount==4):
                     break
-                if(not compare_last10_phead(fname_p_head)):
+                if(compare_phead(fname_p_head) == '0'):
                     print('Not converged, add 2000 iterations.')
                     Additerationscript=open(Additerationscriptname,"r",encoding='utf-8')
                     Additerationcmd=Additerationscript.readline()
@@ -372,7 +381,7 @@ while(i<int(n)):
                     break
 
             #after add iterations still not converged
-            if(not compare_last10_phead(fname_p_head)):
+            if(compare_phead(fname_p_head) == '0'):
                 print('['+datetime.datetime.now().strftime('%F %T')+']\0'+'---Not converged---')
                 shutil.move(workpath+"\\"+name,workpath+"\\"+name+"Not converged")
 
@@ -404,6 +413,7 @@ while(i<int(n)):
         print(e2)
         print('['+datetime.datetime.now().strftime('%F %T')+'] Program exception!')
         print()
+        i+=1
 
 
 print()
@@ -421,4 +431,3 @@ input()
 print("The program will terminate in ten seconds.")
 time.sleep(10)
 sys.exit()
-
