@@ -1,0 +1,8 @@
+/file/read-case/1_2.00mm.cas.gz
+/file/read-data/1_2.00mm.dat.gz
+/file/auto-save/case-frequency if-case-is-mod
+/file/auto-save/data-frequency/200
+/file/write-data
+1_2.00mm.dat.gz
+/file/write-case
+1_2.00mm.dat.gz

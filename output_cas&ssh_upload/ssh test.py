@@ -7,14 +7,16 @@ import time
 host='10.30.76.17'
 user='gengzi'
 passw='gengzi123'
-filepath=sys.path[0]+'\\SCDM_Script.py'
-remotefilepath='/home/1'
-remotefilepath2='/home/1/SCDM_Script.py'
+filepath0=sys.path[0]+'\\1_2.00mm.cas.gz'
+filepath1=sys.path[0]+'\\1_2.00mm.dat.gz'
+filepath2=sys.path[0]+'\\journal.jou'
+filepath3=sys.path[0]+'\\sub.slurm'
+remotefilepath='/home/gengzi/zxy/6L2500rpm'
 localfilepath='E:\\py_on_workbench'
 
 ssh_client = paramiko.SSHClient()
 ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-ssh_client.connect(hostname='127.0.0.1', port=22, username='xiaob', password='Bb20010416')
+ssh_client.connect(hostname=host, port=22, username=user, password=passw)
 channel = ssh_client.invoke_shell()  #变成交互性终端
 
 # while 1:
@@ -25,13 +27,13 @@ channel = ssh_client.invoke_shell()  #变成交互性终端
 #     print(buf)
 
 #get cpu_free
-command=('top -bn 1 -i -c')
-channel.send(command + "\n")  
-time.sleep(1)  
-buf = channel.recv(10024).decode("utf-8")
-text=buf.split('\n')
-text2=text[4].split(' ')
-cpu_free=text2[10]
+# command=('top -bn 1 -i -c')
+# channel.send(command + "\n")  
+# time.sleep(1)  
+# buf = channel.recv(10024).decode("utf-8")
+# text=buf.split('\n')
+# text2=text[4].split(' ')
+# cpu_free=text2[10]
 
 #upload
 def upload(LOCAL_FILE_PATH,SERVER_REMOTE_PATH):
@@ -55,5 +57,8 @@ def download(LOCAL_FILE_PATH,SERVER_REMOTE_PATH):
         print("download successfully!")
     scp_client.close()
 
-upload(filepath,remotefilepath)
-download(localfilepath,remotefilepath2)
+upload(filepath0,remotefilepath)
+upload(filepath1,remotefilepath)
+
+
+input()

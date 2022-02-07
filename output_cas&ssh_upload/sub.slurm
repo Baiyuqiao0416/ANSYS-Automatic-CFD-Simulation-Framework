@@ -1,3 +1,3 @@
 #! /bin/bash
-#SBATCH -n 288
-#SBATCH -N 4
+#SBATCH -n 144
+#SBATCH -N 2

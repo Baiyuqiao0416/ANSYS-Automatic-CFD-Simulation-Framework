@@ -115,14 +115,13 @@ def compare_last10_phead(file):
     else:
         return False
 
-#Determine whether the calculation is complete
-def wait_caculation():
-    while(True):
-        cpu_percent=cpu_usage()
-        if(cpu_percent < 90.0 and cpu_percent != 0.0):
-            break
-        else:
-            time.sleep(120)
+#Create jou
+def jou_create(path,msg):
+    full_path = path + '\\journal.jou'  
+    file = open(full_path, 'w')
+    file.write(msg)
+    file.close()
+    
 
 print()
 print('====================================================================================')
@@ -232,8 +231,8 @@ print('                                  Initializing....                       
 print()
 print('====================================================================================')
 
-if not os.path.exists(workpath+"\\cas&dat"):
-    os.mkdir(workpath+"\\cas&dat")
+if not os.path.exists(workpath+"\\cas_dat"):
+    os.mkdir(workpath+"\\cas_dat")
 # loop
 i=0
 while(i<int(n)):
@@ -323,34 +322,73 @@ while(i<int(n)):
             print('['+datetime.datetime.now().strftime('%F %T')+']\0'+name+'\0Save Completed.')
             print()
 
-            #copy cas&dat to a new folder
+            #copy cas_dat to a new folder
+            if not os.path.exists(workpath+"\\cas_dat\\"+name):
+                os.mkdir(workpath+"\\cas_dat\\"+name)
             source = workpath+"\\"+name+"\\"+name+"_files"+"\\dp0\\FFF\\Fluent\\FFF-1.cas.gz"
-            target = workpath+"\\cas&dat"
+            target = workpath+"\\cas_dat\\"+name
             shutil.copy(source, target)
             source2 = workpath+"\\"+name+"\\"+name+"_files"+"\\dp0\\FFF\\Fluent\\FFF-1-00000.dat.gz"
             shutil.copy(source2, target)
+            source3 = "sub.slurm"
+            shutil.copy(source3, target)
+            source4 = "journal.jou"
+            shutil.copy(source4, target)
 
-            renamesource=workpath+"\\cas&dat\\FFF-1.cas.gz"
-            renametarget=workpath+"\\cas&dat\\"+name+".cas.gz"
+            renamesource=workpath+"\\cas_dat\\"+name+"\\FFF-1.cas.gz"
+            renametarget=workpath+"\\cas_dat\\"+name+"\\"+name+".cas.gz"
             if os.path.exists(renamesource):
                 os.rename(renamesource,renametarget)
-            renamesource2=workpath+"\\cas&dat\\FFF-1-00000.dat.gz"
-            renametarget2=workpath+"\\cas&dat\\"+name+".dat.gz"
+            renamesource2=workpath+"\\cas_dat\\"+name+"\\FFF-1-00000.dat.gz"
+            renametarget2=workpath+"\\cas_dat\\"+name+"\\"+name+".dat.gz"
             if os.path.exists(renamesource2):
                 os.rename(renamesource2,renametarget2)
             
+            #Create jou file
+            full_path = workpath+"\\cas_dat\\"+name+"\\journal.jou"
+            file = open(full_path, 'w')
+            file.write("\n")
+            file.write("/file/read-case/"+name+".cas.gz\n")
+            file.write("/file/read-data/"+name+".dat.gz\n")
+            file.write("/file/auto-save/case-frequency if-case-is-modified\n")
+            file.write("/file/auto-save/data-frequency/400\n")
+            file.write("/solve/set/transient-controls/duration-specification-method 1")
+            file.write("/parallel/timer/reset\n")
+            file.write("/solve/dual-time-iterate\n")
+            file.write("2800\n")
+            file.write("25\n")
+            file.write("yes\n")
+            file.write("yes\n")
+            file.write("yes\n")
+            file.write("yes\n")
+            file.write("yes\n")
+            file.write("yes\n")
+            file.write("yes\n")
+            file.write("yes\n")
+            file.write("yes\n")
+            file.write("yes\n")
+            file.write("/parallel/timer/usage\n")
+            file.write("/file/write-data\n")
+            file.write(name+"_final.dat.gz\n")
+            file.write("/file/write-case\n")
+            file.write(name+"_final.cas.gz\n")
+            file.write("/exit\n")
+            file.write("yes")
+            file.close()
+
             t1=time.time()
             deltat=int(t1)-int(t0) 
             ET=datetime.timedelta(seconds=deltat)
             ETA=datetime.timedelta(seconds=deltat*(int(n)-int(i)-1))
             percentage=round(((i+1)/int(n))*100,2)
             print('\0'+str(percentage)+' % ( '+str(i+1)+' of '+n+' ) [ Elapsed Time: '+str(ET)+' ] [ ETA: '+str(ETA)+' ]')
-            i+=1
+            
     except Exception as e2:
         print()
         print(e2)
         print('['+datetime.datetime.now().strftime('%F %T')+'] Program exception!')
         print()
+    i+=1
 
 
 print()
