@@ -52,7 +52,8 @@ i=0
 while(i<len(filePath)-2):
     name=filePath[i]
     #fname_p_head = workpath+"\\"+name+"\\"+name+"_files"+"\\dp0\\FFF\\Fluent\\p-head-rfile.out"
-    fname_p_head="p-head-rfile.out"
+    #fname_p_head="p-head-rfile.out"
+    fname_p_head="C:\\Users\\xiaob\\Desktop\\p_head\\"+name+"\\p-head-rfile.out"
     wb=openpyxl.load_workbook("caculate_dp.xlsx")
     sheet=wb['Sheet'] #Get sheet by name
     

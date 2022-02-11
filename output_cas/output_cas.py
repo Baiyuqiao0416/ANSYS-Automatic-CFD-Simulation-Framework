@@ -47,18 +47,13 @@ class Logger(object):
 sys.stdout = Logger(sys.stdout)  # write console to log
 sys.stderr = Logger(sys.stderr)  # write err to log 
 
-#cpu usage
-def cpu_usage():
-    while True:                   
-        cpu = psutil.cpu_percent(interval=0.1)   
-        return float(cpu)
-
 #xml
 def xml_getdata(dir,tagname):
     file = xml.dom.minidom.parse(dir)
     tagtext=file.getElementsByTagName(tagname)
     tagtext1=tagtext[0]
     return tagtext1.firstChild.data.strip('\n')
+
 def xml_changedata(dir,tagname,tagtext):
     updateTree = xml.etree.cElementTree.parse(dir) 
     root = updateTree.getroot()
@@ -66,54 +61,11 @@ def xml_changedata(dir,tagname,tagtext):
     tag.text = tagtext
     updateTree.write(dir)
 
-#last line
-def get_last_line(filedir):
-    file=open(filedir, 'rb')
-    off = -50                     #offset
-    while True:
-        file.seek(off, 2)            #seek(off, 2)represents the file pointer: 50 characters (-50) forward from the end of the file (2)
-        lines = file.readlines()     #Read all lines in the file pointer range
-        if len(lines)>=2:         #Determine whether there are at least two lines at the end, so as to ensure that the last line is complete
-            last_line = lines[-1] #Take the last line
-            break
-        #If the readlines obtained when off is 50, there is only one line of content, then there is no guarantee that the last line is complete
-        #So the off doubles and reruns until the readlines is more than one line
-        off *= 2
-    file.close()
-    return last_line.split()
-
 #replace specific line
 def replacement(file, previousw, nextw):
    for line in fileinput.input(file, inplace=1):
        line = line.replace(previousw, nextw)
        sys.stdout.write(line)
-
-#count the total lines
-def count_lines(file):
-    count = -1
-    for count, line in enumerate(open(file, 'rb')):
-        pass
-        count += 1
-    return count
-
-#if last_phead <±5 than the previous one
-def compare_last10_phead(file):
-    count = count_lines(file)
-    i=10
-    j=0    
-    while(i>0):
-        text1=linecache.getline(file,count-i).split()
-        text2=linecache.getline(file,count-i+1).split()
-        p1=float(text1[1])
-        p2=float(text2[1])
-        dp=p2-p1
-        if(dp<5.0 and dp>-5.0):
-            j+=1
-        i-=1
-    if(j==10):
-        return True
-    else:
-        return False
 
 #Create jou
 def jou_create(path,msg):
@@ -173,22 +125,27 @@ while(not flag):
     print()
     print('Please define the workbench path:')
     workbench_dir=input()
-    print('Please define the material database path:')
-    material_database_dir0=input()
+    #print('Please define the material database path:')
+    material_database_dir0=sys.path[0]
+    print('Please set the volume flow (LPM):')
+    volume_flow=input()
     print()
     print('Initial setup is completed.')
     print()
     print('====================================================================================')
-    material_database_dir='(cx-gui-do cx-set-text-entry "Open Database*TextEntry1(Database Name)" "'+ material_database_dir0.replace('\\','/') +'/blood.scm")'
+    material_database_command='(cx-gui-do cx-set-text-entry "Open Database*TextEntry1(Database Name)" "'+ material_database_dir0.replace('\\','/') +'/blood.scm")'
+    mass_flow_command="(cx-gui-do cx-set-expression-entry \"Mass-Flow Inlet*Frame3*Frame1(Momentum)*Table1*Table8*ExpressionEntry1(Mass Flow Rate)\" \'(\""+str(round(float(float(volume_flow)/60*1.055),5))+"\" . 0))"
     xml_changedata(setfile,'workbench_dir',workbench_dir)
-    xml_changedata(setfile,'material_database_dir',material_database_dir)
+    xml_changedata(setfile,'material_database_command',material_database_command)
+    xml_changedata(setfile,'mass_flow_command',mass_flow_command)
     xml_changedata(setfile,'is_seted','True')
     #get flag
     flag=bool(util.strtobool(xml_getdata(setfile,'is_seted')))
 
-#get two dir 
+#get command 
 WorkbenchDir = str(xml_getdata(setfile,'workbench_dir'))
-MaterialDir = str(xml_getdata(setfile,'material_database_dir'))
+MaterialCommand = str(xml_getdata(setfile,'material_database_command'))
+MassFlowCommand = str(xml_getdata(setfile,'mass_flow_command'))
 
 # Fluent setting
 NumberOfProcessors=int(cpu_count())-2
@@ -201,8 +158,10 @@ Meshscriptname='MESH_Script.py'
 Fluentscriptname='FLUENT_output_cas.scm'  
 
 #change fluentscript
-var1 = "material database dir"
-replacement(Fluentscriptname, var1, MaterialDir)
+var1 = "material_database_command"
+replacement(Fluentscriptname, var1, MaterialCommand)
+var2 = "mass_flow_command"
+replacement(Fluentscriptname, var2, MassFlowCommand)
 
 # Input parameters
 in_content="N"
@@ -343,6 +302,10 @@ while(i<int(n)):
             renametarget2=workpath+"\\cas_dat\\"+name+"\\"+name+".dat.gz"
             if os.path.exists(renamesource2):
                 os.rename(renamesource2,renametarget2)
+            renamesource3=workpath+"\\cas_dat\\"+name+"\\sub.slurm"
+            renametarget3=workpath+"\\cas_dat\\"+name+"\\zxy_"+name+".slurm"
+            if os.path.exists(renamesource3):
+                os.rename(renamesource3,renametarget3)
             
             #Create jou file
             full_path = workpath+"\\cas_dat\\"+name+"\\journal.jou"
@@ -351,8 +314,8 @@ while(i<int(n)):
             file.write("/file/read-case/"+name+".cas.gz\n")
             file.write("/file/read-data/"+name+".dat.gz\n")
             file.write("/file/auto-save/case-frequency if-case-is-modified\n")
-            file.write("/file/auto-save/data-frequency/400\n")
-            file.write("/solve/set/transient-controls/duration-specification-method 1")
+            file.write("/file/auto-save/data-frequency/700\n")
+            file.write("/solve/set/transient-controls/duration-specification-method 1\n")
             file.write("/parallel/timer/reset\n")
             file.write("/solve/dual-time-iterate\n")
             file.write("2800\n")
@@ -369,9 +332,9 @@ while(i<int(n)):
             file.write("yes\n")
             file.write("/parallel/timer/usage\n")
             file.write("/file/write-data\n")
-            file.write(name+"_final.dat.gz\n")
+            file.write(name+"_2800_final.dat.gz\n")
             file.write("/file/write-case\n")
-            file.write(name+"_final.cas.gz\n")
+            file.write(name+"_2800_final.cas.gz\n")
             file.write("/exit\n")
             file.write("yes")
             file.close()
@@ -399,7 +362,8 @@ print()
 print('====================================================================================')
 
 #exit
-replacement(Fluentscriptname, MaterialDir, var1) #change the script to origin
+replacement(Fluentscriptname, MaterialCommand, var1) #change the script to origin
+replacement(Fluentscriptname, MassFlowCommand, var2) #change the script to origin
 print()
 print('Press any key to continue...')
 input()

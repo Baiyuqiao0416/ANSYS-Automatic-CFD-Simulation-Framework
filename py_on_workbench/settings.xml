@@ -1,5 +1,6 @@
 <settings>
-<workbench_dir>D:\Program Files\ANSYS Inc\v194</workbench_dir>
-<material_database_dir>(cx-gui-do cx-set-text-entry "Open Database*TextEntry1(Database Name)" "E:/py_on_workbench/py on workbench/blood.scm")</material_database_dir>
-<is_seted>True</is_seted>
+<workbench_dir>default_workbench_dir</workbench_dir>
+<material_database_command>default_material_database_command</material_database_command>
+<mass_flow_command>default_mass_flow_command</mass_flow_command>
+<is_seted>False</is_seted>
 </settings>

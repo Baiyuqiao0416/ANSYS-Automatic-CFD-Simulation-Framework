@@ -183,22 +183,27 @@ while(not flag):
     print()
     print('Please define the workbench path:')
     workbench_dir=input()
-    print('Please define the material database path:')
-    material_database_dir0=input()
+    #print('Please define the material database path:')
+    material_database_dir0=sys.path[0]
+    print('Please set the volume flow (LPM):')
+    volume_flow=input()
     print()
     print('Initial setup is completed.')
     print()
     print('====================================================================================')
-    material_database_dir='(cx-gui-do cx-set-text-entry "Open Database*TextEntry1(Database Name)" "'+ material_database_dir0.replace('\\','/') +'/blood.scm")'
+    material_database_command='(cx-gui-do cx-set-text-entry "Open Database*TextEntry1(Database Name)" "'+ material_database_dir0.replace('\\','/') +'/blood.scm")'
+    mass_flow_command="(cx-gui-do cx-set-expression-entry \"Mass-Flow Inlet*Frame3*Frame1(Momentum)*Table1*Table8*ExpressionEntry1(Mass Flow Rate)\" \'(\""+str(round(float(float(volume_flow)/60*1.055),5))+"\" . 0))"
     xml_changedata(setfile,'workbench_dir',workbench_dir)
-    xml_changedata(setfile,'material_database_dir',material_database_dir)
+    xml_changedata(setfile,'material_database_command',material_database_command)
+    xml_changedata(setfile,'mass_flow_command',mass_flow_command)
     xml_changedata(setfile,'is_seted','True')
     #get flag
     flag=bool(util.strtobool(xml_getdata(setfile,'is_seted')))
 
-#get two dir 
+#get command 
 WorkbenchDir = str(xml_getdata(setfile,'workbench_dir'))
-MaterialDir = str(xml_getdata(setfile,'material_database_dir'))
+MaterialCommand = str(xml_getdata(setfile,'material_database_command'))
+MassFlowCommand = str(xml_getdata(setfile,'mass_flow_command'))
 
 # Fluent setting
 NumberOfProcessors=int(cpu_count())-2
@@ -212,8 +217,10 @@ Fluentscriptname='FLUENT_Script.scm'
 Additerationscriptname='Add_Iteration_Script.scm'
 
 #change fluentscript
-var1 = "material database dir"
-replacement(Fluentscriptname, var1, MaterialDir)
+var1 = "material_database_command"
+replacement(Fluentscriptname, var1, MaterialCommand)
+var2 = "mass_flow_command"
+replacement(Fluentscriptname, var2, MassFlowCommand)
 
 # Input parameters
 in_content="N"
@@ -424,7 +431,8 @@ print()
 print('====================================================================================')
 
 #exit
-replacement(Fluentscriptname, MaterialDir, var1) #change the script to origin
+replacement(Fluentscriptname, MaterialCommand, var1) #change the script to origin
+replacement(Fluentscriptname, MassFlowCommand, var2) #change the script to origin
 print()
 print('Press any key to continue...')
 input()
