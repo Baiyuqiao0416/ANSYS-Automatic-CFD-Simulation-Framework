@@ -104,6 +104,10 @@ options = MirrorOptions()
 result = Mirror.Execute(selection, mirrorPlane, options, None)
 # EndBlock
 
+# Fix Split Edge
+# result = FixSplitEdges.FindAndFix()
+# EndBlock
+
 # Create Volume
 selection = Selection.Create(GetRootPart().Bodies[0].Edges[16])
 secondarySelection = Selection()

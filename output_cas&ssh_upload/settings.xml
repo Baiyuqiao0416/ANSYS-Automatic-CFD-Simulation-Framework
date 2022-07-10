@@ -1,8 +1,8 @@
 <settings>
 <workbench_dir>default_workbench_dir</workbench_dir>
-<material_database_dir>defaule_material_database_dir</material_database_dir>
-<host></host>
-<user></user>
-<password></password>
+<material_database_dir>default_material_database_dir</material_database_dir>
+<host>default_host</host>
+<user>default_uesr</user>
+<password>default_password</password>
 <is_seted>False</is_seted>
 </settings>

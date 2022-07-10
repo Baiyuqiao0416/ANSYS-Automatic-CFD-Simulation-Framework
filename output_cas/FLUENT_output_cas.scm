@@ -14,7 +14,7 @@
 (cx-gui-do cx-activate-item "NavigationPane*List_Tree1")
 (cx-gui-do cx-set-list-tree-selections "NavigationPane*List_Tree1" (list "Setup|Materials|Fluid|air"))
 (cx-gui-do cx-activate-item "Create/Edit Materials*Table1*Frame1*Frame2*ButtonBox2*PushButton2(User-Defined Database)")
-(cx-gui-do cx-set-text-entry "Open Database*TextEntry1(Database Name)" "E:/py_on_workbench/output_cas/blood.scm")
+material_database_command
 (cx-gui-do cx-activate-item "Open Database*PanelButtons*PushButton1(OK)")
 (cx-gui-do cx-set-list-selections "User-Defined Database Materials*Table1*Frame1*List1(Materials)" '( 0))
 (cx-gui-do cx-activate-item "User-Defined Database Materials*Table1*Frame1*List1(Materials)")
@@ -34,7 +34,7 @@
 (cx-gui-do cx-set-list-tree-selections "NavigationPane*List_Tree1" (list "Setup|Boundary Conditions|_1 (wall, id=6)"))
 (cx-gui-do cx-list-tree-right-click "NavigationPane*List_Tree1" )
 (cx-gui-do cx-activate-item "MenuBar*TypeSubMenu*mass-flow-inlet")
-(cx-gui-do cx-set-expression-entry "Mass-Flow Inlet*Frame3*Frame1(Momentum)*Table1*Table8*ExpressionEntry1(Mass Flow Rate)" '("0.04396" . 0))
+mass_flow_command
 (cx-gui-do cx-set-list-selections "Mass-Flow Inlet*Frame3*Frame1(Momentum)*Table1*DropDownList15(Direction Specification Method)" '( 1))
 (cx-gui-do cx-activate-item "Mass-Flow Inlet*Frame3*Frame1(Momentum)*Table1*DropDownList15(Direction Specification Method)")
 (cx-gui-do cx-activate-item "Mass-Flow Inlet*PanelButtons*PushButton1(OK)")

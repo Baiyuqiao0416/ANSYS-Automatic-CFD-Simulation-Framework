@@ -20,9 +20,21 @@ import linecache
 import fileinput
 import xml.dom.minidom
 import xml.etree.cElementTree
+import openpyxl #third package
 from  distutils import util
 from PyWbUnit import CoWbUnitProcess
 from multiprocessing import cpu_count
+
+# Fluent setting
+NumberOfProcessors=int(cpu_count())-2
+NumberOfGPGPUs='1'
+
+# Work setting
+# Use relative paths instead
+SCDMscriptname='SCDM_Script.py' 
+Meshscriptname='MESH_Script.py'
+Fluentscriptname='FLUENT_Script.scm'  
+Additerationscriptname='Add_Iteration_Script.scm'
 
 #Log
 class Logger(object):
@@ -96,32 +108,42 @@ def count_lines(file):
         count += 1
     return count
 
-#if last_phead <±5 than the previous one
-def compare_last10_phead(file):
+#if last 1-10 phead average <±5 than the previous 2-11. Compare 10 dp.
+def compare_phead(file):
     count = count_lines(file)
-    i=10
-    j=0    
-    while(i>0):
+    i=0
+    p=[0 for x in range(0, 20)]
+    while(i<20):
         text1=linecache.getline(file,count-i).split()
-        text2=linecache.getline(file,count-i+1).split()
-        p1=float(text1[1])
-        p2=float(text2[1])
-        dp=p2-p1
-        if(dp<5.0 and dp>-5.0):
-            j+=1
-        i-=1
-    if(j==10):
-        return True
+        p[i]=float(text1[1])
+        i+=1
+    m=0
+    j=0
+    while(j<10):
+        k=0
+        sum1=sum2=0
+        while(j+k<=j+9):
+            sum1+=p[k+j]
+            sum2+=p[k+j+1]
+            k+=1
+        avg_dp=(sum1-sum2)/10
+        j+=1
+        if(avg_dp >= -5 and avg_dp <= 5):
+            m+=1
+    if(m==10):
+        result=(sum1+sum2)/20
+        return result  #Pa
     else:
-        return False
+        return '0'
 
-#Create jou
-def jou_create(path,msg):
-    full_path = path + '\\journal.jou'  
-    file = open(full_path, 'w')
-    file.write(msg)
-    file.close()
-    
+#Determine whether the calculation is complete
+def wait_caculation():
+    while(True):
+        cpu_percent=cpu_usage()
+        if(cpu_percent < 90.0 and cpu_percent != 0.0):
+            break
+        else:
+            time.sleep(120)
 
 print()
 print('====================================================================================')
@@ -173,45 +195,29 @@ while(not flag):
     print()
     print('Please define the workbench path:')
     workbench_dir=input()
-    print('Please define the material database path:')
-    material_database_dir0=input()
+    #print('Please define the material database path:')
+    material_database_dir0=sys.path[0]
     print()
     print('Initial setup is completed.')
     print()
     print('====================================================================================')
-    material_database_dir='(cx-gui-do cx-set-text-entry "Open Database*TextEntry1(Database Name)" "'+ material_database_dir0.replace('\\','/') +'/blood.scm")'
+    material_database_command='(cx-gui-do cx-set-text-entry "Open Database*TextEntry1(Database Name)" "'+ material_database_dir0.replace('\\','/') +'/blood.scm")' 
     xml_changedata(setfile,'workbench_dir',workbench_dir)
-    xml_changedata(setfile,'material_database_dir',material_database_dir)
+    xml_changedata(setfile,'material_database_command',material_database_command)
     xml_changedata(setfile,'is_seted','True')
     #get flag
     flag=bool(util.strtobool(xml_getdata(setfile,'is_seted')))
-
-#get two dir 
-WorkbenchDir = str(xml_getdata(setfile,'workbench_dir'))
-MaterialDir = str(xml_getdata(setfile,'material_database_dir'))
-
-# Fluent setting
-NumberOfProcessors=int(cpu_count())-2
-NumberOfGPGPUs='1'
-
-# Work setting
-# Use relative paths instead
-SCDMscriptname='SCDM_Script.py' 
-Meshscriptname='MESH_Script.py'
-Fluentscriptname='FLUENT_output_cas.scm'  
-
-#change fluentscript
-var1 = "material database dir"
-replacement(Fluentscriptname, var1, MaterialDir)
 
 # Input parameters
 in_content="N"
 while(in_content!="Y"):
     print("Please define the work path:")
-    workpath = input()   
-    print("Please define the initial d 'd0':")
+    workpath = input()
+    print('Please set the volume flow (LPM):')
+    volume_flow=input()   
+    print("Please define the initial d 'd0' (mm):")
     d0 = input()
-    print("Please define the delta d 'step':")
+    print("Please define the delta d 'step' (mm):")
     step = input()
     print("Please define the number of caculation 'n':")
     n = input()
@@ -219,8 +225,9 @@ while(in_content!="Y"):
     print("Please make sure the following content is correct, press 'Y' if it is correct.")
     print()
     print('workpath='+workpath)
-    print('d0='+d0)
-    print('step='+step)
+    print('volume_flow='+volume_flow+' LPM')
+    print('d0='+d0+' mm')
+    print('step='+step+' mm')
     print('n='+n)
     print()
     in_content=input()
@@ -231,8 +238,25 @@ print('                                  Initializing....                       
 print()
 print('====================================================================================')
 
-if not os.path.exists(workpath+"\\cas_dat"):
-    os.mkdir(workpath+"\\cas_dat")
+
+mass_flow_command="(cx-gui-do cx-set-expression-entry \"Mass-Flow Inlet*Frame3*Frame1(Momentum)*Table1*Table8*ExpressionEntry1(Mass Flow Rate)\" \'(\""+str(round(float(float(volume_flow)/60*1.055),5))+"\" . 0))"
+xml_changedata(setfile,'mass_flow_command',mass_flow_command)
+#get command 
+WorkbenchDir = str(xml_getdata(setfile,'workbench_dir'))
+MaterialCommand = str(xml_getdata(setfile,'material_database_command'))
+MassFlowCommand = str(xml_getdata(setfile,'mass_flow_command'))
+
+#change fluentscript
+var1 = "material_database_command"
+replacement(Fluentscriptname, var1, MaterialCommand)
+var2 = "mass_flow_command"
+replacement(Fluentscriptname, var2, MassFlowCommand)
+
+wb=openpyxl.Workbook() #create Workbook() object
+ws=wb.active #get dafault sheet
+ws.append(["Name", "p_head(Pa)","p_head(mmHg)"])#write data to file
+wb.save(workpath+"\\caculate_dp.xlsx")
+
 # loop
 i=0
 while(i<int(n)):
@@ -275,8 +299,10 @@ while(i<int(n)):
         coWbUnit.execWbCommand('Mesh1.Edit()')
         Meshscript=open(Meshscriptname,"r",encoding='utf-8')
         #Sizing of throat <=0.13125mm (0.075d)
-        if(d<=1.75):
+        if(d<=1.75 and d>0.75):
             Meshcmd='mesh1 = Model.Mesh'+'\n'+'mesh1.NumberOfCPUsForParallelPartMeshing='+str(NumberOfProcessors)+'\n'+'d='+str(d)+'\n'+str(Meshscript.read())
+        elif(d<=0.75):
+            Meshcmd='mesh1 = Model.Mesh'+'\n'+'mesh1.NumberOfCPUsForParallelPartMeshing='+str(NumberOfProcessors)+'\n'+'d=0.75'+'\n'+str(Meshscript.read())    
         else:
             Meshcmd='mesh1 = Model.Mesh'+'\n'+'mesh1.NumberOfCPUsForParallelPartMeshing='+str(NumberOfProcessors)+'\n'+'d=1.75'+'\n'+str(Meshscript.read())
         coWbUnit.execWbCommand('Meshcmd="""'+Meshcmd+'"""')
@@ -290,6 +316,11 @@ while(i<int(n)):
             coWbUnit.saveProject(workpath+"\\"+name+"\\"+wbpjname)
             os.mkdir(workpath+"\\"+name+"\\"+name+"_files"+"\\dp0\\FFF\\Fluent")
             # Fluent
+            source = "output_residual.jou"
+            target = workpath+"\\"+name+"\\"+name+"_files"+"\\dp0\\FFF\\Fluent"
+            shutil.copy(source, target)
+            source2 = "residuals.dat"
+            shutil.copy(source2, target)
 
             coWbUnit.execWbCommand('setupComponent1 = system1.GetComponent(Name="Setup")')
             coWbUnit.execWbCommand('setupComponent1.Refresh()')
@@ -304,10 +335,81 @@ while(i<int(n)):
                 coWbUnit.execWbCommand('setup1.SendCommand("""'+Fluentline+'""")')
                 Fluentline=Fluentscript.readline()
             Fluentscript.close()
+            #time.sleep(120)
+            #if residual > 1e-05 , excute another journal to increase the iteration (up to 10000 iterations)
+            
+            fname_residuals = workpath+"\\"+name+"\\"+name+"_files"+"\\dp0\\FFF\\Fluent\\residuals.dat"
+            fname_p_head = workpath+"\\"+name+"\\"+name+"_files"+"\\dp0\\FFF\\Fluent\\p-head-rfile.out"
+            fname_d_mfr = workpath+"\\"+name+"\\"+name+"_files"+"\\dp0\\FFF\\Fluent\\diff-mfr-rfile.out"
+
+            #Determine whether the calculation is complete
+            wait_caculation()
+            wb=openpyxl.load_workbook(workpath+"\\caculate_dp.xlsx")
+            sheet=wb['Sheet'] #Get sheet by name           
+            #lines of residuals.dat
+            count = -1
+            countnext=0
+            while(True):
+                count = count_lines(fname_residuals)      
+                if(countnext==count+1):
+                    print('['+datetime.datetime.now().strftime('%F %T')+']\0'+str(count-1)+' iterations completed.')
+                    break
+                countnext=count+1
+            iteration=count-1
+            addcount=0
+            while(True):
+                a=get_last_line(fname_residuals)
+                b=get_last_line(fname_d_mfr)
+                c=compare_phead(fname_p_head)
+                print()
+                print('iterations= '+str(iteration))
+                print('continuity= {:.4e}'.format(float(a[0])))
+                print('x-velocity= {:.4e}'.format(float(a[1])))
+                print('y-velocity= {:.4e}'.format(float(a[2])))
+                print('z-velocity= {:.4e}'.format(float(a[3])))
+                print('         k= {:.4e}'.format(float(a[4])))	
+                print('     omega= {:.4e}'.format(float(a[5])))
+                print(' delta mfr= {:.4e}'.format(float(b[1])))  #delta mass flow rate
+                print('    p-head= {:.4e} Pa'.format(float(c)))
+                print('          = {:.4e} mmHg'.format(float(c)*0.0075))
+                print()
+                if(addcount==4):
+                    break
+                if(compare_phead(fname_p_head) == '0'):
+                    print('Not converged, add 2000 iterations.')
+                    Additerationscript=open(Additerationscriptname,"r",encoding='utf-8')
+                    Additerationcmd=Additerationscript.readline()
+                    while Additerationcmd:
+                        Additerationcmd=Additerationcmd.strip('\n')
+                        coWbUnit.execWbCommand('setup1.SendCommand(Command="""'+Additerationcmd+'""")')
+                        Additerationcmd=Additerationscript.readline()
+                    Additerationscript.close()
+                    addcount+=2
+                    count = -1
+                    wait_caculation()
+                    while(True):
+                        count = count_lines(fname_residuals)   
+                        if(countnext==count+1):
+                            print('['+datetime.datetime.now().strftime('%F %T')+']\0'+str(count-addcount)+' iterations completed.')
+                            break
+                        countnext=count+1
+                    iteration+=(count-addcount)
+                else:
+                    print('Converged.')
+                    break
+                sheet.append([name, round(float(c),4),round(float(c)*0.0075,4)]) 
+            #after add iterations still not converged
+            if(compare_phead(fname_p_head) == '0'):
+                print('['+datetime.datetime.now().strftime('%F %T')+']\0'+'---Not converged---')
+                shutil.move(workpath+"\\"+name,workpath+"\\"+name+"Not converged")
+                sheet.append([name, 'Not converged.']) 
+
+
 
             #exit fluent
             coWbUnit.execWbCommand('setup1.Exit()')
             print('['+datetime.datetime.now().strftime('%F %T')+']\0'+name+'\0Fluent Completed.')
+            wb.save(workpath+"\\caculate_dp.xlsx")
 
         except Exception as e1:
             print()
@@ -320,79 +422,20 @@ while(i<int(n)):
             coWbUnit.saveProject(workpath+"\\"+name+"\\"+wbpjname)
             coWbUnit.finalize()
             print('['+datetime.datetime.now().strftime('%F %T')+']\0'+name+'\0Save Completed.')
-            print()
-
-            #copy cas_dat to a new folder
-            if not os.path.exists(workpath+"\\cas_dat\\"+name):
-                os.mkdir(workpath+"\\cas_dat\\"+name)
-            source = workpath+"\\"+name+"\\"+name+"_files"+"\\dp0\\FFF\\Fluent\\FFF-1.cas.gz"
-            target = workpath+"\\cas_dat\\"+name
-            shutil.copy(source, target)
-            source2 = workpath+"\\"+name+"\\"+name+"_files"+"\\dp0\\FFF\\Fluent\\FFF-1-00000.dat.gz"
-            shutil.copy(source2, target)
-            source3 = "sub.slurm"
-            shutil.copy(source3, target)
-            source4 = "journal.jou"
-            shutil.copy(source4, target)
-
-            renamesource=workpath+"\\cas_dat\\"+name+"\\FFF-1.cas.gz"
-            renametarget=workpath+"\\cas_dat\\"+name+"\\"+name+".cas.gz"
-            if os.path.exists(renamesource):
-                os.rename(renamesource,renametarget)
-            renamesource2=workpath+"\\cas_dat\\"+name+"\\FFF-1-00000.dat.gz"
-            renametarget2=workpath+"\\cas_dat\\"+name+"\\"+name+".dat.gz"
-            if os.path.exists(renamesource2):
-                os.rename(renamesource2,renametarget2)
-            renamesource3=workpath+"\\cas_dat\\"+name+"\\sub.slurm"
-            renametarget3=workpath+"\\cas_dat\\"+name+"\\zxy_"+name+".slurm"
-            if os.path.exists(renamesource3):
-                os.rename(renamesource3,renametarget3)
-            
-            #Create jou file
-            full_path = workpath+"\\cas_dat\\"+name+"\\journal.jou"
-            file = open(full_path, 'w')
-            file.write("\n")
-            file.write("/file/read-case/"+name+".cas.gz\n")
-            file.write("/file/read-data/"+name+".dat.gz\n")
-            file.write("/file/auto-save/case-frequency if-case-is-modified\n")
-            file.write("/file/auto-save/data-frequency/700\n")
-            file.write("/solve/set/transient-controls/duration-specification-method 1\n")
-            file.write("/parallel/timer/reset\n")
-            file.write("/solve/dual-time-iterate\n")
-            file.write("2800\n")
-            file.write("25\n")
-            file.write("yes\n")
-            file.write("yes\n")
-            file.write("yes\n")
-            file.write("yes\n")
-            file.write("yes\n")
-            file.write("yes\n")
-            file.write("yes\n")
-            file.write("yes\n")
-            file.write("yes\n")
-            file.write("yes\n")
-            file.write("/parallel/timer/usage\n")
-            file.write("/file/write-data\n")
-            file.write(name+"_2800_final.dat.gz\n")
-            file.write("/file/write-case\n")
-            file.write(name+"_2800_final.cas.gz\n")
-            file.write("/exit\n")
-            file.write("yes")
-            file.close()
-
+            print()    
             t1=time.time()
             deltat=int(t1)-int(t0) 
             ET=datetime.timedelta(seconds=deltat)
             ETA=datetime.timedelta(seconds=deltat*(int(n)-int(i)-1))
             percentage=round(((i+1)/int(n))*100,2)
             print('\0'+str(percentage)+' % ( '+str(i+1)+' of '+n+' ) [ Elapsed Time: '+str(ET)+' ] [ ETA: '+str(ETA)+' ]')
-            
+            i+=1
     except Exception as e2:
         print()
         print(e2)
         print('['+datetime.datetime.now().strftime('%F %T')+'] Program exception!')
         print()
-    i+=1
+        i+=1
 
 
 print()
@@ -403,11 +446,11 @@ print()
 print('====================================================================================')
 
 #exit
-replacement(Fluentscriptname, MaterialDir, var1) #change the script to origin
+replacement(Fluentscriptname, MaterialCommand, var1) #change the script to origin
+replacement(Fluentscriptname, MassFlowCommand, var2) #change the script to origin
 print()
 print('Press any key to continue...')
 input()
 print("The program will terminate in ten seconds.")
 time.sleep(10)
 sys.exit()
-

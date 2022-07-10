@@ -20,9 +20,21 @@ import linecache
 import fileinput
 import xml.dom.minidom
 import xml.etree.cElementTree
+import openpyxl #third package
 from  distutils import util
 from PyWbUnit import CoWbUnitProcess
 from multiprocessing import cpu_count
+
+# Fluent setting
+NumberOfProcessors=int(cpu_count())-2
+NumberOfGPGPUs='1'
+
+# Work setting
+# Use relative paths instead
+SCDMscriptname='SCDM_Script.py' 
+Meshscriptname='MESH_Script.py'
+Fluentscriptname='FLUENT_Script.scm'  
+Additerationscriptname='Add_Iteration_Script.scm'
 
 #Log
 class Logger(object):
@@ -185,51 +197,27 @@ while(not flag):
     workbench_dir=input()
     #print('Please define the material database path:')
     material_database_dir0=sys.path[0]
-    print('Please set the volume flow (LPM):')
-    volume_flow=input()
     print()
     print('Initial setup is completed.')
     print()
     print('====================================================================================')
-    material_database_command='(cx-gui-do cx-set-text-entry "Open Database*TextEntry1(Database Name)" "'+ material_database_dir0.replace('\\','/') +'/blood.scm")'
-    mass_flow_command="(cx-gui-do cx-set-expression-entry \"Mass-Flow Inlet*Frame3*Frame1(Momentum)*Table1*Table8*ExpressionEntry1(Mass Flow Rate)\" \'(\""+str(round(float(float(volume_flow)/60*1.055),5))+"\" . 0))"
+    material_database_command='(cx-gui-do cx-set-text-entry "Open Database*TextEntry1(Database Name)" "'+ material_database_dir0.replace('\\','/') +'/blood.scm")' 
     xml_changedata(setfile,'workbench_dir',workbench_dir)
     xml_changedata(setfile,'material_database_command',material_database_command)
-    xml_changedata(setfile,'mass_flow_command',mass_flow_command)
     xml_changedata(setfile,'is_seted','True')
     #get flag
     flag=bool(util.strtobool(xml_getdata(setfile,'is_seted')))
-
-#get command 
-WorkbenchDir = str(xml_getdata(setfile,'workbench_dir'))
-MaterialCommand = str(xml_getdata(setfile,'material_database_command'))
-MassFlowCommand = str(xml_getdata(setfile,'mass_flow_command'))
-
-# Fluent setting
-NumberOfProcessors=int(cpu_count())-2
-NumberOfGPGPUs='1'
-
-# Work setting
-# Use relative paths instead
-SCDMscriptname='SCDM_Script.py' 
-Meshscriptname='MESH_Script.py'
-Fluentscriptname='FLUENT_Script.scm'  
-Additerationscriptname='Add_Iteration_Script.scm'
-
-#change fluentscript
-var1 = "material_database_command"
-replacement(Fluentscriptname, var1, MaterialCommand)
-var2 = "mass_flow_command"
-replacement(Fluentscriptname, var2, MassFlowCommand)
 
 # Input parameters
 in_content="N"
 while(in_content!="Y"):
     print("Please define the work path:")
-    workpath = input()   
-    print("Please define the initial d 'd0':")
+    workpath = input()
+    print('Please set the volume flow (LPM):')
+    volume_flow=input()   
+    print("Please define the initial d 'd0' (mm):")
     d0 = input()
-    print("Please define the delta d 'step':")
+    print("Please define the delta d 'step' (mm):")
     step = input()
     print("Please define the number of caculation 'n':")
     n = input()
@@ -237,8 +225,9 @@ while(in_content!="Y"):
     print("Please make sure the following content is correct, press 'Y' if it is correct.")
     print()
     print('workpath='+workpath)
-    print('d0='+d0)
-    print('step='+step)
+    print('volume_flow='+volume_flow+' LPM')
+    print('d0='+d0+' mm')
+    print('step='+step+' mm')
     print('n='+n)
     print()
     in_content=input()
@@ -248,6 +237,21 @@ print()
 print('                                  Initializing....                                  ')
 print()
 print('====================================================================================')
+
+
+mass_flow_command="(cx-gui-do cx-set-expression-entry \"Mass-Flow Inlet*Frame3*Frame1(Momentum)*Table1*Table8*ExpressionEntry1(Mass Flow Rate)\" \'(\""+str(round(float(float(volume_flow)/60*1.055),5))+"\" . 0))"
+xml_changedata(setfile,'mass_flow_command',mass_flow_command)
+#get command 
+WorkbenchDir = str(xml_getdata(setfile,'workbench_dir'))
+MaterialCommand = str(xml_getdata(setfile,'material_database_command'))
+MassFlowCommand = str(xml_getdata(setfile,'mass_flow_command'))
+
+#change fluentscript
+var1 = "material_database_command"
+replacement(Fluentscriptname, var1, MaterialCommand)
+var2 = "mass_flow_command"
+replacement(Fluentscriptname, var2, MassFlowCommand)
+
 
 # loop
 i=0
@@ -291,8 +295,10 @@ while(i<int(n)):
         coWbUnit.execWbCommand('Mesh1.Edit()')
         Meshscript=open(Meshscriptname,"r",encoding='utf-8')
         #Sizing of throat <=0.13125mm (0.075d)
-        if(d<=1.75):
+        if(d<=1.75 and d>0.75):
             Meshcmd='mesh1 = Model.Mesh'+'\n'+'mesh1.NumberOfCPUsForParallelPartMeshing='+str(NumberOfProcessors)+'\n'+'d='+str(d)+'\n'+str(Meshscript.read())
+        elif(d<=0.75):
+            Meshcmd='mesh1 = Model.Mesh'+'\n'+'mesh1.NumberOfCPUsForParallelPartMeshing='+str(NumberOfProcessors)+'\n'+'d=0.75'+'\n'+str(Meshscript.read())    
         else:
             Meshcmd='mesh1 = Model.Mesh'+'\n'+'mesh1.NumberOfCPUsForParallelPartMeshing='+str(NumberOfProcessors)+'\n'+'d=1.75'+'\n'+str(Meshscript.read())
         coWbUnit.execWbCommand('Meshcmd="""'+Meshcmd+'"""')
@@ -384,7 +390,7 @@ while(i<int(n)):
                         countnext=count+1
                     iteration+=(count-addcount)
                 else:
-                    print('Converged.')
+                    print('['+datetime.datetime.now().strftime('%F %T')+']\0'+'---Converged---')
                     break
 
             #after add iterations still not converged

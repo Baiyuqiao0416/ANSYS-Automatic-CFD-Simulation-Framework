@@ -1,6 +1,6 @@
 <settings>
 <workbench_dir>D:\Program Files\ANSYS Inc\v194</workbench_dir>
 <material_database_command>(cx-gui-do cx-set-text-entry "Open Database*TextEntry1(Database Name)" "E:/py_on_workbench/output_cas/blood.scm")</material_database_command>
-<mass_flow_command>(cx-gui-do cx-set-expression-entry "Mass-Flow Inlet*Frame3*Frame1(Momentum)*Table1*Table8*ExpressionEntry1(Mass Flow Rate)" '("0.04396" . 0))</mass_flow_command>
+<mass_flow_command>(cx-gui-do cx-set-expression-entry "Mass-Flow Inlet*Frame3*Frame1(Momentum)*Table1*Table8*ExpressionEntry1(Mass Flow Rate)" '("0.08792" . 0))</mass_flow_command>
 <is_seted>True</is_seted>
 </settings>
